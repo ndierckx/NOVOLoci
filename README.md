@@ -50,7 +50,6 @@ Every parameter of the configuration file is explained below.
 <code>perl NOVOLoci1.0.pl -c config.txt</code>
 
 
-
 ----------------------------------------------------------------------------------------------------------
 
 ## Configuration file
@@ -60,3 +59,67 @@ To make the assembler work, your configuration file has to have the exact same s
 (Make sure there is always a space after the equals sign and every parameter is captured in one single line)
 
 **1. Example of configuration file:**
+
+<pre>
+
+Project:
+-----------------------
+Project name          = /path/to/seed_file/Seed.fasta
+Assembly length       = 1000000
+Subsample             = 
+Save assembled reads  = 
+Seed Input            = /path/to/seed_file/Seed.fasta
+Extend seed directly  = yes
+Reference sequence    = 
+Variance detection    = 
+Cores                 = 30
+
+Nanopore reads:
+-----------------------
+Nanopore reads        = /path/to/reads/
+Local DB and NP reads =
+Sequencing depth NP   = 20
+
+PacBio reads:
+-----------------------
+PacBio reads          = /path/to/reads/
+Local DB and PB reads =
+Sequencing depth PB   = 20
+
+Optional:
+-----------------------
+Output path           = /path/to/output_folder/
+
+
+</pre>
+
+**2. Explanation parameters:**
+<pre>
+
+Project:
+-----------------------
+Project name         = Choose a name for your project, it will be used for the output files.
+Assembly length      = If you want the assembly to terminate after a certain length, you can use this option
+Subsample            = This option is currently not available
+Save assembled reads = All the reads used for the assembly will be stored in seperate files (yes/no)
+Seed Input           = The path to the file that contains the seed sequence.
+Extend seed directly = This gives the option to extend the seed directly, in stead of finding matching reads. Only use this when your seed 
+                       originates from the same sample or a close reference (yes/no)
+Reference (optional) = This option is currently not available.
+Variance detection   = This option is currently not available.
+Cores                = It is strongly adviced to use multiple cores for the assembly, give here the available cores
+Output path          = /path/to/output_folder/
+
+Nanopore reads:
+-----------------------
+Nanopore reads        = /path/to/reads/
+Local DB and NP reads =
+Sequencing depth NP   = 20
+
+PacBio reads:
+-----------------------
+PacBio reads          = /path/to/reads/
+Local DB and NP reads =
+Sequencing depth PB   = 2
+
+</pre>
