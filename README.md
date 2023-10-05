@@ -73,6 +73,7 @@ Extend seed directly  = yes
 Reference sequence    = 
 Variance detection    = 
 Cores                 = 30
+Output path           = /path/to/output_folder/
 
 Nanopore reads:
 -----------------------
@@ -85,11 +86,6 @@ PacBio reads:
 PacBio reads          = /path/to/reads/
 Local DB and PB reads =
 Sequencing depth PB   = 20
-
-Optional:
------------------------
-Output path           = /path/to/output_folder/
-
 
 </pre>
 
