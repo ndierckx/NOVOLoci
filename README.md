@@ -69,7 +69,7 @@ Assembly length       = 1000000
 Subsample             = 
 Save assembled reads  = 
 Seed Input            = /path/to/seed_file/Seed.fasta
-Extend seed directly  = yes
+Split haplotypes      = yes
 Reference sequence    = 
 Variance detection    = 
 Cores                 = 30
@@ -79,13 +79,14 @@ Nanopore reads:
 -----------------------
 Nanopore reads        = /path/to/reads/
 Local DB and NP reads =
-Sequencing depth NP   = 20
+Sequencing depth NP   = 
+Use Quality scores    =
 
 PacBio reads:
 -----------------------
 PacBio reads          = /path/to/reads/
 Local DB and PB reads =
-Sequencing depth PB   = 20
+Sequencing depth PB   = 
 
 </pre>
 
@@ -99,7 +100,7 @@ Assembly length      = If you want the assembly to terminate after a certain len
 Subsample            = This option is currently not available
 Save assembled reads = All the reads used for the assembly will be stored in seperate files (yes/no)
 Seed Input           = The path to the file that contains the seed sequence.
-Extend seed directly = This gives the option to extend the seed directly, in stead of finding matching reads. Only use this when your seed 
+Split haplotypes     = This gives the option to extend the seed directly, in stead of finding matching reads. Only use this when your seed 
                        originates from the same sample or a close reference (yes/no)
 Reference (optional) = This option is currently not available.
 Variance detection   = This option is currently not available.
@@ -110,12 +111,13 @@ Nanopore reads:
 -----------------------
 Nanopore reads        = /path/to/reads/
 Local DB and NP reads =
-Sequencing depth NP   = 20
+Sequencing depth NP   =
+Use Quality scores    =
 
 PacBio reads:
 -----------------------
 PacBio reads          = /path/to/reads/
 Local DB and NP reads =
-Sequencing depth PB   = 2
+Sequencing depth PB   = 
 
 </pre>
