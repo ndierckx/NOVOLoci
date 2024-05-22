@@ -64,28 +64,30 @@ To make the assembler work, your configuration file has to have the exact same s
 
 Project:
 -----------------------
-Project name          = /path/to/seed_file/Seed.fasta
+Project name          = projectname
 Assembly length       = 1000000
 Subsample             = 
 Save assembled reads  = 
 Seed Input            = /path/to/seed_file/Seed.fasta
-Split haplotypes      = yes
+Ploidy                = 2
 Reference sequence    = 
 Variance detection    = 
 Cores                 = 30
 Output path           = /path/to/output_folder/
+TMP path              = /path/to/temporary_folder/
 
 Nanopore reads:
 -----------------------
 Nanopore reads        = /path/to/reads/
-Local DB and NP reads =
+Local DB and NP reads = /path/to/database/
 Sequencing depth NP   = 
+Min read length NP    =
 Use Quality scores    =
 
 PacBio reads:
 -----------------------
 PacBio reads          = /path/to/reads/
-Local DB and PB reads =
+Local DB and PB reads = /path/to/database/
 Sequencing depth PB   = 
 
 </pre>
@@ -95,29 +97,30 @@ Sequencing depth PB   =
 
 Project:
 -----------------------
-Project name         = Choose a name for your project, it will be used for the output files.
-Assembly length      = If you want the assembly to terminate after a certain length, you can use this option
-Subsample            = This option is currently not available
-Save assembled reads = All the reads used for the assembly will be stored in seperate files (yes/no)
-Seed Input           = The path to the file that contains the seed sequence.
-Split haplotypes     = This gives the option to extend the seed directly, in stead of finding matching reads. Only use this when your seed 
-                       originates from the same sample or a close reference (yes/no)
-Reference (optional) = This option is currently not available.
-Variance detection   = This option is currently not available.
-Cores                = It is strongly adviced to use multiple cores for the assembly, give here the available cores
-Output path          = /path/to/output_folder/
+Project name          = Choose a name for your project, it will be used for the output files.
+Assembly length       = If you want the assembly to terminate after a certain length, you can give the desired length; If you want to assemble the complete dataset write: "WG"
+Subsample             = This option is currently not available
+Save assembled reads  = All the reads used for the assembly will be stored in seperate files (yes/no)
+Seed Input            = The path to the file that contains the seed sequence.
+Ploidy                = Give the ploidy of the sample. If it is a very heterozygous diploid species (>2%), you can give ploidy 1
+Reference (optional)  = This option is currently not available.
+Variance detection    = This option is currently not available.
+Cores                 = It is strongly adviced to use multiple cores for the assembly, give here the available cores
+Output path           = /path/to/output_folder/
+TMP path              = /path/to/temporary_folder/
 
 Nanopore reads:
 -----------------------
-Nanopore reads        = /path/to/reads/
-Local DB and NP reads =
-Sequencing depth NP   =
+Nanopore reads        = Only use this when you run the dataset for the first time. 
+Local DB and NP reads = If you ran the dataset before, you can give the path of the previous output folder to reuse the database
+Sequencing depth NP   = Give an estimation of the sequencing depth
+Min read length NP    = Give the minimum read length to be used in the assembly, (default: 1000)
 Use Quality scores    =
 
 PacBio reads:
 -----------------------
-PacBio reads          = /path/to/reads/
-Local DB and NP reads =
+PacBio reads          = Only use this when you run the dataset for the first time. 
+Local DB and NP reads = If you ran the dataset before, you can give the path of the previous output folder to reuse the database
 Sequencing depth PB   = 
 
 </pre>
