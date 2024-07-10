@@ -89,6 +89,7 @@ PacBio reads:
 PacBio reads          = /path/to/reads/
 Local DB and PB reads = /path/to/database/
 Sequencing depth PB   = 
+Min read length PB    =
 
 </pre>
 
