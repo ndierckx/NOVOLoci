@@ -124,5 +124,6 @@ PacBio reads:
 PacBio reads          = Only use this when you run the dataset for the first time. 
 Local DB and NP reads = If you ran the dataset before, you can give the path of the previous output folder to reuse the database
 Sequencing depth PB   = 
+Min read length PB    = Give the minimum read length to be used in the assembly, (default: 500)
 
 </pre>
