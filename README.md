@@ -99,7 +99,8 @@ Min read length PB    =
 Project:
 -----------------------
 Project name          = Choose a name for your project, it will be used for the output files.
-Assembly length       = If you want the assembly to terminate after a certain length, you can give the desired length; If you want to assemble the complete dataset write: "WG"
+Assembly length       = If you want the assembly to terminate after a certain length, you can give the desired length; 
+                        If you want to assemble the complete dataset write: "WG"
 Subsample             = This option is currently not available
 Save assembled reads  = All the reads used for the assembly will be stored in seperate files (yes/no)
 Seed Input            = The path to the file that contains the seed sequence.
