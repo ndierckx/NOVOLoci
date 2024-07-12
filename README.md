@@ -43,6 +43,10 @@ Every parameter of the configuration file is explained below.
 
 - Install BLAST
 - Install MAFFT
+- Install Perl modules: MCE::Child, MCE::Channel and Parallel::ForkManager
+  
+  <code>cpan install MCE</code>
+  <code>cpan install Parallel::ForkManager</code>
 
 
 ### 4. Run NOVOLoci
