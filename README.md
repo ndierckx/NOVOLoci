@@ -34,7 +34,7 @@ If your assembly was unsuccessful, you could already add the log file and the co
   
   <code>cpan install Parallel::ForkManager</code>
   
-### 2. Find a suitable seed (Only Targeted approach)
+### 2. Find a suitable seed (only Targeted approach)
 
 - Sequence from a reference genome or from a previous assembly
 - Length should be at least 500 bp
