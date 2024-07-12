@@ -24,22 +24,30 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 ## Instructions
 
-### Targeted approach
+### 1. Install dependencies
 
-### 1. Find a suitable seed
+- Install BLAST
+- Install MAFFT
+- Install Perl modules: MCE::Child, MCE::Channel and Parallel::ForkManager
+  
+  <code>cpan install MCE</code>
+  
+  <code>cpan install Parallel::ForkManager</code>
+  
+### 2. Find a suitable seed (Only Targeted approach)
 
 - Sequence from a reference genome or from a previous assembly
 - Length should be at least 500 bp
 - Make sure you take a sequence before the complex region that you target, DO NOT start in repetitive or duplicated region!
 - The format should be like a standard fasta file (first line: >Id_sequence)
 
-
-### 2. Create configuration file
+### 3. Create configuration file
 
 You can download the example file (config.txt) and adjust the settings to your liking.  
 Every parameter of the configuration file is explained below. 
 
-### 3. Install dependencies
+
+### 4. Install dependencies
 
 - Install BLAST
 - Install MAFFT
