@@ -47,17 +47,6 @@ You can download the example file (config.txt) and adjust the settings to your l
 Every parameter of the configuration file is explained below. 
 
 
-### 4. Install dependencies
-
-- Install BLAST
-- Install MAFFT
-- Install Perl modules: MCE::Child, MCE::Channel and Parallel::ForkManager
-  
-  <code>cpan install MCE</code>
-  
-  <code>cpan install Parallel::ForkManager</code>
-
-
 ### 4. Run NOVOLoci
 
 <code>perl NOVOLoci1.0.pl -c config.txt</code>
