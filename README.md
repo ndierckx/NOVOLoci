@@ -3,7 +3,7 @@
 NOVOLoci is a haplotype aware assembler for targeted assembly or whole genome assembly of small genomes.
 Both HiFi and ONT reads can be used seperatly or combined.
 
-Will be available soon.
+Currently it is only available for Nanopore, PacBio and hybrid options will be available soon.
 
 ## Cite
 
