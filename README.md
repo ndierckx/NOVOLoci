@@ -68,13 +68,11 @@ Project:
 -----------------------
 Project name          = projectname
 Assembly length       = 1000000
-Subsample             = 
 Save assembled reads  = 
+Genome size           =
 Seed Input            = /path/to/seed_file/Seed.fasta
 Ploidy                = 2
-Reference sequence    = 
-Variance detection    = 
-Cores                 = 30
+Threads               = 30
 Output path           = /path/to/output_folder/
 TMP path              = /path/to/temporary_folder/
 
@@ -83,8 +81,8 @@ Nanopore reads:
 Nanopore reads        = /path/to/reads/
 Local DB and NP reads = /path/to/database/
 Sequencing depth NP   = 
+R10                   =
 Min read length NP    =
-Use Quality scores    =
 
 PacBio reads:
 -----------------------
@@ -103,13 +101,11 @@ Project:
 Project name          = Choose a name for your project, it will be used for the output files.
 Assembly length       = If you want the assembly to terminate after a certain length, you can give the desired length; 
                         If you want to assemble the complete dataset write: "WG"
-Subsample             = This option is currently not available
 Save assembled reads  = All the reads used for the assembly will be stored in seperate files (yes/no)
+Genome size           = Either you give the genome size (in Gbp) or you give the sequencing depth below.
 Seed Input            = The path to the file that contains the seed sequence.
 Ploidy                = Give the ploidy of the sample. If it is a very heterozygous diploid species (>2%), you can give ploidy 1
-Reference (optional)  = This option is currently not available.
-Variance detection    = This option is currently not available.
-Cores                 = It is strongly adviced to use multiple cores for the assembly, give here the available cores
+Threads               = It is strongly adviced to use multiple cores for the assembly, give here the available cores
 Output path           = /path/to/output_folder/
 TMP path              = /path/to/temporary_folder/
 
@@ -118,8 +114,8 @@ Nanopore reads:
 Nanopore reads        = Only use this when you run the dataset for the first time. 
 Local DB and NP reads = If you ran the dataset before, you can give the path of the previous output folder to reuse the database
 Sequencing depth NP   = Give an estimation of the sequencing depth
+R10                   = If you are using R10 data, please write "yes" here
 Min read length NP    = Give the minimum read length to be used in the assembly, (default: 1000)
-Use Quality scores    =
 
 PacBio reads:
 -----------------------
