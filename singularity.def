@@ -36,7 +36,7 @@ From: ubuntu:20.04
 
 %runscript
     # default entrypoint when user does: singularity run novoloci.sif ...
-    exec perl /opt/novoloci/novoloci.pl "$@"
+    exec perl /opt/novoloci/NOVOLoci0.1.pl "$@"
 
 %help
     NOVOLoci container with all dependencies:
