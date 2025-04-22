@@ -24,6 +24,14 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 ## Instructions
 
+### With Singularity:
+
+<code>git clone https://github.com/ndierckx/NOVOLoci.git</code>
+<code>cd NOVOLoci</code>
+<code>singularity build novoloci.sif singularity.def</code>
+<code>singularity run novoloci.sif -c config.txt</code>
+
+
 ### 1. Install dependencies
 
 - Install BLAST
