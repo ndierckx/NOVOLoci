@@ -69,9 +69,10 @@ Project:
 Project name          = projectname
 Assembly length       = 1000000
 Save assembled reads  = 
-Genome size           =
 Seed Input            = /path/to/seed_file/Seed.fasta
+Genome size           =
 Ploidy                = 2
+Circular              =
 Threads               = 30
 Output path           = /path/to/output_folder/
 TMP path              = /path/to/temporary_folder/
@@ -102,9 +103,10 @@ Project name          = Choose a name for your project, it will be used for the 
 Assembly length       = If you want the assembly to terminate after a certain length, you can give the desired length; 
                         If you want to assemble the complete dataset write: "WG"
 Save assembled reads  = All the reads used for the assembly will be stored in seperate files (yes/no)
-Genome size           = Either you give the genome size (in Gbp) or you give the sequencing depth below.
 Seed Input            = The path to the file that contains the seed sequence.
+Genome size           = Either you give the genome size (in Gbp) or you give the sequencing depth below.
 Ploidy                = Give the ploidy of the sample. If it is a very heterozygous diploid species (>2%), you can give ploidy 1
+Circular              = "Yes" for when the targeted sequence is circular, make sure to give an assembly length, it will try to circularize after reaching that length
 Threads               = It is strongly adviced to use multiple cores for the assembly, give here the available cores
 Output path           = /path/to/output_folder/
 TMP path              = /path/to/temporary_folder/
