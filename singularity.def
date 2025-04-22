@@ -1,0 +1,48 @@
+Bootstrap: docker
+From: ubuntu:20.04
+
+%labels
+    Author      Nicolas Dierckxsens
+    Version     v0.1
+    Maintainer  ndierckx@github
+
+%environment
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+    export PATH=/usr/local/bin:/usr/bin:$PATH
+
+%files
+    . /opt/novoloci
+
+%post
+    # system deps
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential \
+      curl \
+      git \
+      ncbi-blast+ \
+      mafft \
+      cpanminus \
+      libparallel-forkmanager-perl \
+      libmce-perl \
+    && rm -rf /var/lib/apt/lists/*
+
+    # ensure latest on CPAN
+    cpanm --notest MCE Parallel::ForkManager
+
+    # make sure NOVOLoci scripts are executable
+    chmod -R +x /opt/novoloci
+
+%runscript
+    # default entrypoint when user does: singularity run novoloci.sif ...
+    exec perl /opt/novoloci/novoloci.pl "$@"
+
+%help
+    NOVOLoci container with all dependencies:
+      • BLAST+ (ncbi-blast+)
+      • MAFFT
+      • Perl modules MCE & Parallel::ForkManager
+    Usage:
+      singularity build novoloci.sif Singularity.def
+      singularity run novoloci.sif [options]
