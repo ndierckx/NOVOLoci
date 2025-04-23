@@ -32,11 +32,17 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 <code>docker pull ndierckx/novoloci:latest</code>
 
-<code>docker run --rm ndierckx/novoloci perl NOVOLoci0.1.pl -c config.txt</code>
+<code>docker run --rm ndierckx/novoloci  -c config.txt</code>
 
 ### OR
 
 ### With Singularity:
+
+<code>singularity pull docker://ndierckx/novoloci:latest</code>
+
+<code>singularity exec novoloci_latest.sif NOVOLoci0.1.pl -c config.txt</code>
+
+OR 
 
 <code>git clone https://github.com/ndierckx/NOVOLoci.git</code>
 
@@ -44,7 +50,9 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 <code>singularity build novoloci.sif singularity.def</code>
 
-<code>singularity run novoloci.sif -c config.txt</code>
+<code>singularity run novoloci.sif -c config.txt</code> 
+
+ 
 
 ### OR
 
