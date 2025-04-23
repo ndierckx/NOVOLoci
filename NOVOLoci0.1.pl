@@ -24857,6 +24857,10 @@ close OUTPUT19;
 close OUTPUT20;
 close OUTPUT_FINAL;
 
+
+#Merge contigs---------------------------------------------------------------------------------------------------------
+
+
 select(STDERR);
 $| = 1;
 select(STDOUT); # default
@@ -24867,7 +24871,7 @@ my $length_seq = '1000';
 
 my $DB_direc_tmp = $output_path."DB_MERGE/DB_MERGE";
 mkdir $DB_direc_tmp;
-my $DB_output_tmp = $output_path."DB_tmp_file.txt";    
+my $DB_output_tmp = $TMP_directory."DB_tmp_file.txt";    
 my $command_make_DB = "makeblastdb -in ".$final_assembly_file." -dbtype nucl -out ".$DB_direc_tmp." > ".$DB_output_tmp."";
 system($command_make_DB);
 
@@ -24941,13 +24945,13 @@ foreach my $contig_id (sort keys %contigs)
     $query_coverage0 -= (($N_count/$length_seq)/100);
     $query_accuracy0 -= (($N_count/$length_seq)/100);
 
-    my $query_file_DB = $output_path."query_".$contig_id.".fasta";
+    my $query_file_DB = $TMP_directory."query_".$contig_id.".fasta";
     open(INPUT_QUERY, ">" .$query_file_DB) or die "\nCan't open file $query_file_DB, $!\n";
     INPUT_QUERY->autoflush(1);
     print INPUT_QUERY $first_start_seq;        
     close INPUT_QUERY;
     
-    my $file_tmp = $output_path."blast_tmp_DB_".$contig_id."_first_".$first_start.".txt";
+    my $file_tmp = $TMP_directory."blast_tmp_DB_".$contig_id."_first_".$first_start.".txt";
     my $command_DB = "blastn -query ".$query_file_DB." -db ".$DB_direc_tmp_new." -out ".$file_tmp." -outfmt 7 -perc_identity ".$query_accuracy0." -qcov_hsp_perc ".$query_coverage0." -num_threads 2 &";
     syscmd($command_DB);
     $files{$contig_id} = $file_tmp;
@@ -25091,8 +25095,8 @@ BLAST_RESULTS1:   while (my $line_tmp = <BLAST_RESULTS_DB>)
                             $subject_seq_tmp = substr $contigs{$contig_id}, -$length_tmp*1.08;
                         }
                         $align_count++;
-                        my $query_file3 = $output_path."query3".$contig_id."_".$align_count.".fasta";
-                        my $subject_file3 = $output_path."subject2".$contig_id."_".$align_count.".fasta";
+                        my $query_file3 = $TMP_directory."query3".$contig_id."_".$align_count.".fasta";
+                        my $subject_file3 = $TMP_directory."subject2".$contig_id."_".$align_count.".fasta";
                         my $N_count = $subject_seq_tmp =~ tr/N/N/;
                         my $N_adjust = ($N_count/length($subject_seq_tmp))*100;
                         my $N_count2 = $query_seq_tmp =~ tr/N/N/;
@@ -25108,7 +25112,7 @@ BLAST_RESULTS1:   while (my $line_tmp = <BLAST_RESULTS_DB>)
                         print INPUT_SUBJECT3 $subject_seq_tmp;        
                         close INPUT_SUBJECT3;
                         
-                        my $file_tmp2 = $output_path."blast_tmp3_".$contig_id."_".$id_tmp."_".$length_tmp."_first2_".$first_start.".txt";
+                        my $file_tmp2 = $TMP_directory."blast_tmp3_".$contig_id."_".$id_tmp."_".$length_tmp."_first2_".$first_start.".txt";
                         my $command_DB = "blastn -query ".$query_file3." -subject ".$subject_file3." -out ".$file_tmp2." -outfmt 7 -perc_identity ".$accuracy_tmp2." -qcov_hsp_perc ".$query_coverage2. "&";
                         syscmd($command_DB);
                         $aligned{$id_tmp.$contig_id}{$reverse_tmp}{$first_start} = undef;
@@ -25476,14 +25480,14 @@ if ($first_start eq "")
     my $DB_direc_tmp2 = $output_path."DB_MERGE2/DB_MERGE2";
     mkdir $DB_direc_tmp2;
     $DB_direc_tmp_new = $DB_direc_tmp2;
-    my $DB_output_tmp2 = $output_path."DB_tmp_file2.txt";    
+    my $DB_output_tmp2 = $TMP_directory."DB_tmp_file2.txt";    
     my $command_make_DB2 = "makeblastdb -in ".$output_file5b." -dbtype nucl -out ".$DB_direc_tmp2." > ".$DB_output_tmp2."";
     system($command_make_DB2);
                       
     goto START_MERGE;
 }
 
-my $output_file55  = $output_path."assembly_final.fasta";
+my $output_file55  = $output_path."assembly_final_".$project.".fasta";
 open(OUTPUT_MERGED, ">" .$output_file55) or die "\nCan't open file $output_file55, $!\n";
 foreach my $id_tmp (keys %contigs)
 {
@@ -25500,6 +25504,20 @@ close OUTPUT_MERGED;
 print "...OK\n";
 
 close OUTPUT4;
+
+if ($TMP_directory ne "" && $TMP_directory ne $output_path)
+{
+	opendir(DIR_TMP, $TMP_directory) or die "Could not open $TMP_directory\n";
+				
+	for my $filename (sort readdir(DIR_TMP))
+	{
+		if ($filename ne "." && $filename ne "..")
+		{
+			unlink $filename;
+		}
+	}
+	closedir DIR_TMP;
+}
 
 sleep(6);
 if ($NP_reads ne "" || $PB_reads ne "" || $input_reads_DB_folder_NP ne "" || $input_reads_DB_folder_PB ne "")
