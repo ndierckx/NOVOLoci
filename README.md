@@ -30,9 +30,9 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 <code>cd NOVOLoci</code>
 
-<code>docker pull ndierckx/novoloci:0.1</code>
+<code>docker pull ndierckx/novoloci:latest</code>
 
-<code>singularity run novoloci.sif -c config.txt</code>
+<code>docker run --rm ndierckx/novoloci perl NOVOLoci0.1.pl -c config.txt</code>
 
 ### OR
 
