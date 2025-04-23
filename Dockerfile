@@ -1,5 +1,5 @@
 # 1. Base image
-FROM ubuntu:20.04
+FROM ubuntu:24.10
 
 # 2. Metadata
 LABEL maintainer="ndierckx@github" \
