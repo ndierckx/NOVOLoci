@@ -32,6 +32,3 @@ RUN chmod -R +x /opt/novoloci
 
 # 7. Set working dir
 WORKDIR /opt/novoloci
-
-# 8. Default entrypoint
-ENTRYPOINT ["perl", "NOVOLoci0.1.pl"]
