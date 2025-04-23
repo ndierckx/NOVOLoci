@@ -24,6 +24,18 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 ## Instructions
 
+### With Docker:
+
+<code>git clone https://github.com/ndierckx/NOVOLoci.git</code>
+
+<code>cd NOVOLoci</code>
+
+<code>docker pull ndierckx/novoloci:0.1</code>
+
+<code>singularity run novoloci.sif -c config.txt</code>
+
+### OR
+
 ### With Singularity:
 
 <code>git clone https://github.com/ndierckx/NOVOLoci.git</code>
