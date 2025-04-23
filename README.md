@@ -26,10 +26,6 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 ### With Docker:
 
-<code>git clone https://github.com/ndierckx/NOVOLoci.git</code>
-
-<code>cd NOVOLoci</code>
-
 <code>docker pull ndierckx/novoloci:latest</code>
 
 <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
