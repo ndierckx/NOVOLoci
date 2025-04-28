@@ -714,6 +714,10 @@ if (($sequencing_depth_NP < 1 || $sequencing_depth_NP eq "") && ($NP_reads ne ""
 {
 	die "\n'Please give an estimation of the Nanopore sequencing depth in the config file!\n";
 }
+if (($PB_reads ne ""  && $PB_reads ne "/path/to/reads/") || ($input_reads_DB_folder_PB ne "" &&$input_reads_DB_folder_PB ne "/path/to/database/"))
+{
+	die "\nPacBio as input is currently not available\n";
+}
 if (($sequencing_depth_PB < 1 || $sequencing_depth_PB eq "") && ($PB_reads ne "" || $input_reads_DB_folder_PB ne "") && $genome_size eq "")
 {
 	die "\n'Please give an estimation of the PacBio sequencing depth in the config file!\n";
@@ -2744,7 +2748,7 @@ select(STDOUT); # default
 $| = 1;
 
 print "\nPrepare seeds...";
-print OUTPUT4 "\nPrepare seeds...\n";
+print OUTPUT4 "\nPrepare seeds...";
 
 #Retrieve first read from the given seed-----------------------------------------------------------------------------------------------------------------------------------
 
@@ -2886,6 +2890,7 @@ my $found_haps_in_seed = "";
 my $next_seed_print = "yes";
 my $last_seed = "";
 my $first_back_assembly = "";
+my $WG_all_reads_checked = "";
 
 #SEED select for WG mode----------------------------------------------------------------------------------------------------------------
 
@@ -3125,16 +3130,23 @@ DIR_DB:	for my $filename (sort readdir(DIR_DB_NP))
 									if ($check_rev ne "rev")
 									{
 										$keep_track_of_reads_number_current++;
-										if ($keep_track_of_reads_number_current > $keep_track_of_reads_number - $maxProcs_tmp)
+										if (($keep_track_of_reads_number_current > $keep_track_of_reads_number - $maxProcs_tmp) || $WG_all_reads_checked ne "")
 										{
 											$keep_track_of_reads_number++;
 											substr $filename3, -6, 6, "";
 											
 											my @file_name = split /_/, $filename3;
 											
+											my $WG_rejected_reads_tmp = "";
+											if (exists($WG_rejected_reads{$file_name[3]}))
+											{
+												$WG_rejected_reads_tmp = "yes";
+												delete $WG_rejected_reads{$file_name[3]};
+											}
+											
 											if (exists($reads_as_seeds{$file_name[3]}))
 											{}
-											elsif (-s $output_file20)
+											elsif (-s $output_file20 && $WG_rejected_reads_tmp eq "")
 											{
 												$reads_as_seeds{$file_name[3]} = undef;
 												#my $sequence_tmp_file  = $DB_path3.$output_path_test.$filename3.".fasta";
@@ -3284,6 +3296,20 @@ SKIP_SEED_SEARCH:
 	{
 		$last_seed = "yes";
 		goto END1;
+	}	
+}
+
+if ($assembly_length_max eq "WG" && $WG_all_reads_checked eq "")
+{
+	my $seed_count_tmp = keys %seeds_list;
+	if ($seed_count_tmp < 1)
+	{
+		$WG_all_reads_checked = "yes";
+		my $extra_reads_tmp = keys %WG_rejected_reads;
+		if ($extra_reads_tmp > 0)
+		{
+			goto NEXT_SEED;
+		}
 	}
 }
 
@@ -13314,7 +13340,7 @@ DB_RESULTS_NP1:
 				my $total_matches = keys %id_matches;
 				print {$filehandle{$seed_id2}} "\n".$total_matches." LAST_1000_matches\n";
 				
-				if ($assembly_length_max eq "WG" && $y eq "1" && ($total_matches > $sequencing_depth_NP*1.7 || ($total_matches < 10 && $total_matches < $sequencing_depth_NP*0.35)) && ($first_back_assembly eq "" || length($read) < 5000))
+				if ($assembly_length_max eq "WG" && $y eq "1" && ($total_matches > $sequencing_depth_NP*1.7 || ($total_matches < 10 && $total_matches < $sequencing_depth_NP*0.45)) && ($first_back_assembly eq "" || length($read) < 5000) && $WG_all_reads_checked eq "")
 				{
 					foreach my $blast_db_results_tmp (keys %output_files_DB2)
 					{
@@ -13330,7 +13356,7 @@ DB_RESULTS_NP1:
 					}
 					#print $total_matches." READ_REJECTED1\n";
 					print {$filehandle{$seed_id2}} $total_matches." READ_REJECTED1\n";
-					if ($total_matches < $sequencing_depth_NP*2.5 && $total_matches > 5)
+					if ($total_matches < $sequencing_depth_NP*3 && $total_matches > 5)
 					{
 						$WG_rejected_reads{$id} = undef;
 					}
@@ -18326,12 +18352,18 @@ POST_SNP_PATTERNS_TMP_NP: foreach my $pos_tmp (sort {$a <=> $b} keys %SNP_patter
 							print {$filehandle{$seed_id2}} $post_pattern_match." POST_PATTERN_MATCH\n";
 						}
 						
-						if ($post_pattern_match eq "yes3" && $total_nuc_count < 12 && $ext2_count < 12 && $merged_ext eq "" && $added_unknown eq "")
+						if ($post_pattern_match eq "yes3" && $total_nuc_count < 12 && $ext2_count < 12 && $merged_ext eq "" && $added_unknown eq "" && $add_rejected_reads eq "" && $add_no_match_reads eq "")
 						{
 							my $unknown_count = keys %extensions_unknown2;
+							print {$filehandle{$seed_id2}} $unknown_count." POST_PATTERN_MATCH_EXTRA\n";
 							if ($unknown_count > 0)
 							{
 								$added_unknown = "yes";
+								$mismatch_retry++;
+								$best_extension = "";
+								$best_extension_part = "";
+								undef %quality_scores_tmp;
+								goto MISMATCH_RETRY_NP;
 							}
 						}
                         
@@ -24650,10 +24682,10 @@ if (($assembly_length_max eq "WG" || keys %split_contigs_reads > 0 || $assembly_
 	
 	foreach my $contig_number_tmp (sort {$a <=> $b} keys %split_contigs_reads)
 	{
-		print $contig_number_tmp." CONTIG_NUMBER\n";
+		#print $contig_number_tmp." CONTIG_NUMBER\n";
 		foreach my $id_tmp (keys %{$split_contigs_reads{$contig_number_tmp}})
 		{
-			print $id_tmp." ID\n";
+			#print $id_tmp." ID\n";
 			if (exists($first_back_assembly{$id_tmp}))
 			{
 				foreach my $new_contig_seed (keys %{$split_contigs_reads{$contig_number_tmp}{$id_tmp}})
@@ -24661,7 +24693,7 @@ if (($assembly_length_max eq "WG" || keys %split_contigs_reads > 0 || $assembly_
 					$split_contigs_ends{$id_tmp} = $new_contig_seed;
 					foreach my $nuc_tmp (keys %{$split_contigs_reads{$contig_number_tmp}{$id_tmp}{$new_contig_seed}})
 					{
-						print $nuc_tmp." NEW_NUC_SPLITbbb\n";
+						#print $nuc_tmp." NEW_NUC_SPLITbbb\n";
 						$seeds_list{$id_tmp."c".$contig_number_tmp} = $new_contig_seed;
 						$keep_track_of_reads_number++;
 						$seeds_list_sorted{$keep_track_of_reads_number."c".$contig_number_tmp} = $id_tmp."c".$contig_number_tmp;
@@ -24682,7 +24714,7 @@ if (($assembly_length_max eq "WG" || keys %split_contigs_reads > 0 || $assembly_
 				my $found_tmp = "";
 				foreach my $new_contig_seed (keys %{$split_contigs_reads{$contig_number_tmp}{$id_tmp}})
 				{
-					print length($new_contig_seed)." LENGTH_READ\n";
+					#print length($new_contig_seed)." LENGTH_READ\n";
 		
 					if (keys %split_contigs_ends > 0)
 					{
@@ -24752,7 +24784,7 @@ NEXT_SEED_ACCEPT:
 										if ($accuracy_tmp > 99.8 || ($PB_reads eq "" && $input_reads_DB_folder_PB eq "" && $accuracy_tmp > 80))
 										{
 											close SEED_TEST;
-							print $line_tmp." CONTIG_BREAK_MATCH\n";
+							#print $line_tmp." CONTIG_BREAK_MATCH\n";
 											goto NEXT_SEED_ACCEPT3;
 										}  
 									}
@@ -24768,14 +24800,14 @@ NEXT_SEED_ACCEPT:
 						}
 NEXT_SEED_ACCEPT2:									
 					}
-					print length($new_contig_seed)." NEW_SEED\n";
+					#print length($new_contig_seed)." NEW_SEED\n";
 					$found_tmp = "yes";
 					$split_contigs_ends{$id_tmp} = $new_contig_seed;
 
 					foreach my $nuc_tmp (keys %{$split_contigs_reads{$contig_number_tmp}{$id_tmp}{$new_contig_seed}})
 					{
-						print $id_tmp."c".$contig_number_tmp." NEW_ID\n";
-						print $nuc_tmp." NEW_NUC_SPLIT\n";
+						#print $id_tmp."c".$contig_number_tmp." NEW_ID\n";
+						#print $nuc_tmp." NEW_NUC_SPLIT\n";
 						$seeds_list{$id_tmp."c".$contig_number_tmp} = $new_contig_seed;
 						$keep_track_of_reads_number++;
 						$seeds_list_sorted{$keep_track_of_reads_number."c".$contig_number_tmp} = $id_tmp."c".$contig_number_tmp;
@@ -24790,7 +24822,7 @@ NEXT_SEED_ACCEPT2:
 						{
 							$assembly_length_prev{$id_tmp."c".$contig_number_tmp} = $contig_length{$id_tmp}-length($new_contig_seed);
 						}
-						print $assembly_length_prev{$id_tmp."c".$contig_number_tmp}." ASS_LENGTH1\n";
+						#print $assembly_length_prev{$id_tmp."c".$contig_number_tmp}." ASS_LENGTH1\n";
 						foreach my $id_read (keys %{$split_contigs_reads{$contig_number_tmp}{$id_tmp}{$new_contig_seed}{$nuc_tmp}})
 						{
 							$split_contigs_reads2{$id_tmp."c".$contig_number_tmp}{$id_read} = $split_contigs_reads{$contig_number_tmp}{$id_tmp}{$new_contig_seed}{$nuc_tmp}{$id_read};
