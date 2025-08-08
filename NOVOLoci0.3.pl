@@ -238,7 +238,7 @@ GetOptions (
             "c=s" => \$config,
             ) or die "Incorrect usage!\n";
 
-open(CONFIG, $config) or die "Error:Can't open the configuration file, please check the manual!\n\nUsage: perl NOVOLoci0.2.pl -c config.txt\n";
+open(CONFIG, $config) or die "Error:Can't open the configuration file, please check the manual!\n\nUsage: perl NOVOLoci0.3.pl -c config.txt\n";
 
 while (my $line = <CONFIG>)
 {
@@ -645,7 +645,7 @@ else
 
 print "\n\n-----------------------------------------------";
 print "\nNOVOLoci\n";
-print "Version 0.2\n";
+print "Version 0.3\n";
 print "Author: Nicolas Dierckxsens, (c) 2022-2025\n";
 print "-----------------------------------------------\n\n";
 
@@ -682,7 +682,7 @@ print "Min read length PB    = ".$minimum_read_length_PB."\n\n";
 
 print OUTPUT4 "\n\n-----------------------------------------------";
 print OUTPUT4 "\nNOVOLoci\n";
-print OUTPUT4 "Version 0.2\n";
+print OUTPUT4 "Version 0.3\n";
 print OUTPUT4 "Author: Nicolas Dierckxsens, (c) 2022-2025\n";
 print OUTPUT4 "-----------------------------------------------\n\n";
 
@@ -766,7 +766,7 @@ if ($save_reads eq "no")
     $save_reads = "";
 }
 
-my $USAGE = "\nUsage: perl NOVOLoci0.2.pl -c config_example.txt";
+my $USAGE = "\nUsage: perl NOVOLoci0.3.pl -c config_example.txt";
 
 if (($NP_reads ne "" || $input_reads_DB_folder_NP ne "") && ($PB_reads ne "" || $input_reads_DB_folder_PB ne ""))
 {
