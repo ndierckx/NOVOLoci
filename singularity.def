@@ -3,7 +3,7 @@ From: ubuntu:24.10
 
 %labels
     Author      Nicolas Dierckxsens
-    Version     v0.1
+    Version     v0.3
     Maintainer  ndierckx@github
 
 %environment
@@ -36,7 +36,7 @@ From: ubuntu:24.10
 
 %runscript
     # default entrypoint when user does: singularity run novoloci.sif ...
-    exec perl /opt/novoloci/NOVOLoci0.2.pl "$@"
+    exec perl /opt/novoloci/NOVOLoci0.3.pl "$@"
 
 %help
     NOVOLoci container with all dependencies:
