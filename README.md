@@ -36,7 +36,7 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 <code>singularity pull docker://ndierckx/novoloci:latest</code>
 
-<code>singularity exec novoloci_latest.sif NOVOLoci0.1.pl -c config.txt</code>
+<code>singularity exec novoloci_latest.sif NOVOLoci0.3.pl -c config.txt</code>
 
 OR 
 
@@ -77,7 +77,7 @@ Every parameter of the configuration file is explained below.
 
 ### 4. Run NOVOLoci
 
-<code>perl NOVOLoci1.0.pl -c config.txt</code>
+<code>perl NOVOLoci0.3.pl -c config.txt</code>
 
 
 ----------------------------------------------------------------------------------------------------------
