@@ -24,15 +24,17 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 ## Instructions
 
-### With Docker:
+### 1. Install
+
+#### With Docker:
 
 <code>docker pull ndierckx/novoloci:latest</code>
 
 <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
 
-### OR
+#### OR
 
-### With Singularity:
+#### With Singularity:
 
 <code>singularity pull docker://ndierckx/novoloci:latest</code>
 
@@ -48,11 +50,10 @@ OR
 
 <code>singularity run novoloci.sif -c config.txt</code> 
 
- 
 
-### OR
+#### OR
 
-### 1. Install dependencies
+#### Install dependencies locally
 
 - Install BLAST
 - Install MAFFT
@@ -61,6 +62,8 @@ OR
   <code>cpan install MCE</code>
   
   <code>cpan install Parallel::ForkManager</code>
+  
+  <code>perl NOVOLoci0.3.pl -c config.txt</code>
   
 ### 2. Find a suitable seed (only Targeted approach)
 
@@ -77,7 +80,7 @@ Every parameter of the configuration file is explained below.
 
 ### 4. Run NOVOLoci
 
-<code>perl NOVOLoci0.3.pl -c config.txt</code>
+
 
 
 ----------------------------------------------------------------------------------------------------------
