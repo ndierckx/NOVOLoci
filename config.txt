@@ -9,7 +9,7 @@ Ploidy                = 2
 Circular              =
 Threads               = 30
 Output path           = /path/to/output_folder/
-TMP path              = /path/to/temporary_folder/
+TMP path              = /path/to/output_folder/TMP/
 
 Nanopore reads:
 -----------------------
