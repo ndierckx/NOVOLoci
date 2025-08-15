@@ -3,6 +3,7 @@
 NOVOLoci is a haplotype aware assembler for targeted assembly or whole genome assembly of small genomes.
 
 We currently recommend limiting the assembly size to regions <20 Mb in targeted-mode and diploid genomes that are <250 Mb in WG-mode, with a minimum sequencing depth of 10x per haplotype.
+
 If you do need to phase accuratly and you have HiFi or R10 ONT data, it is adviced to use Hifiasm, as it is has a much shorter runtime.
 
 Both HiFi and ONT reads can be used seperatly or combined.
