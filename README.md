@@ -53,6 +53,16 @@ OR
 
 <code>singularity run novoloci.sif -c config.txt</code> 
 
+#### OR
+
+#### With conda:
+
+<code>conda create -n novoloci -c conda-forge -c bioconda novoloci</code>
+
+<code>conda activate novoloci</code>
+
+<code>novoloci -c config.txt</code>
+
 
 #### OR
 
