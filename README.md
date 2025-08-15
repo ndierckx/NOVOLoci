@@ -6,8 +6,6 @@ We currently recommend limiting the assembly size to regions <20 Mb in targeted-
 
 If you do need to phase accuratly and you have HiFi or R10 ONT data, it is adviced to use Hifiasm, as it is has a much shorter runtime.
 
-Both HiFi and ONT reads can be used seperatly or combined.
-
 Currently it is only available for Nanopore, PacBio and hybrid options will be available soon.
 
 ## Cite
