@@ -3,9 +3,9 @@
 ## Contents
 
 - [Overview](#Overview)
-- [Getting help](#Gettinghelp)
-- [Installation guide](#Installationguide)
-- [How to run](#Howtorun)
+- [Getting help](#Getting-help)
+- [Installation guide](#Installation-guide)
+- [How to run](#How-to-run)
 - [Demo](#Demo)
 - [Citation](#Citation)
 
@@ -102,7 +102,7 @@ Every parameter of the configuration file is explained below.
 
 ### 3. Run NOVOLoci
 
-
+## Demo
 
 ## Citation
 
