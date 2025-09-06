@@ -3,6 +3,12 @@
 ## Contents
 
 - [Overview](##Overview)
+- [Getting help](##Getting help)
+- [Installation guide](##Installation guide)
+- [How to run](##How to run)
+- [Demo](##Demo)
+- [Citation](##Citation)
+
 
 ## Overview
 
@@ -28,19 +34,17 @@ If your assembly was unsuccessful, you could already add the log file and the co
 <a href="https://gbiomed.kuleuven.be/english/cme/research/laboratories/laboratory-for-cytogenetics-and-genome-research/laboratory-for-cytogenetics-and-genome-research" target="_blank"><img border="0" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/KU_Leuven_logo.svg/768px-KU_Leuven_logo.svg.png" width=auto height="70"></a><a href="https://groups.oist.jp/grsu" target="_blank"><img border="0" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/OIST_logo.png/1200px-OIST_logo.png" width=auto height="70"></a>
 
 
-## Instructions
+## Installation guide
 
-### 1. Install
-
-#### With Docker:
+### With Docker:
 
 <code>docker pull ndierckx/novoloci:latest</code>
 
 <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
 
-#### OR
+### OR
 
-#### With Singularity:
+### With Singularity:
 
 <code>singularity pull docker://ndierckx/novoloci:latest</code>
 
@@ -56,9 +60,9 @@ OR
 
 <code>singularity run novoloci.sif -c config.txt</code> 
 
-#### OR
+### OR
 
-#### With conda:
+### With conda:
 
 <code>conda create -n novoloci -c conda-forge -c bioconda novoloci</code>
 
@@ -67,9 +71,9 @@ OR
 <code>novoloci -c config.txt</code>
 
 
-#### OR
+### OR
 
-#### Install dependencies locally
+### Install dependencies locally
 
 - Install BLAST
 - Install MAFFT
@@ -80,21 +84,23 @@ OR
   <code>cpan install Parallel::ForkManager</code>
   
   <code>perl NOVOLoci0.3.pl -c config.txt</code>
-  
-### 2. Find a suitable seed (only Targeted approach)
+
+## How to run
+
+### 1. Find a suitable seed (only Targeted approach)
 
 - Sequence from a reference genome or from a previous assembly
 - Length should be at least 500 bp
 - Make sure you take a sequence before the complex region that you target, DO NOT start in repetitive or duplicated region!
 - The format should be like a standard fasta file (first line: >Id_sequence)
 
-### 3. Create configuration file
+### 2. Create configuration file
 
 You can download the example file (config.txt) and adjust the settings to your liking.  
 Every parameter of the configuration file is explained below. 
 
 
-### 4. Run NOVOLoci
+### 3. Run NOVOLoci
 
 
 
