@@ -1,5 +1,11 @@
 # NOVOLoci - Haplotype-aware assembly of long-sequencing reads
 
+## Contents
+
+- [Overview](##Overview)
+
+## Overview
+
 NOVOLoci is a haplotype aware assembler for targeted assembly or whole genome assembly of small genomes.
 
 We currently recommend limiting the assembly size to regions <20 Mb in targeted-mode and diploid genomes that are <250 Mb in WG-mode, with a minimum sequencing depth of 10x per haplotype.
@@ -8,9 +14,6 @@ If you do need to phase accuratly and you have HiFi or R10 ONT data, it is advic
 
 Currently it is only available for Nanopore, PacBio and hybrid options will be available soon.
 
-## Cite
-
-Will soon be available on BioRxiv 
 
 ## Getting help
 
@@ -95,6 +98,9 @@ Every parameter of the configuration file is explained below.
 
 
 
+## Citation
+
+https://www.biorxiv.org/content/10.1101/2025.08.08.669243v1.abstract
 
 ----------------------------------------------------------------------------------------------------------
 
