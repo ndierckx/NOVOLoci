@@ -3,9 +3,9 @@
 ## Contents
 
 - [Overview](##Overview)
-- [Getting help](##Getting help)
-- [Installation guide](##Installation guide)
-- [How to run](##How to run)
+- [Getting help](##Gettinghelp)
+- [Installation guide](##Installationguide)
+- [How to run](##Howtorun)
 - [Demo](##Demo)
 - [Citation](##Citation)
 
