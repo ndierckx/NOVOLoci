@@ -2,12 +2,12 @@
 
 ## Contents
 
-- [Overview](##Overview)
-- [Getting help](##Gettinghelp)
-- [Installation guide](##Installationguide)
-- [How to run](##Howtorun)
-- [Demo](##Demo)
-- [Citation](##Citation)
+- [Overview](#Overview)
+- [Getting help](#Gettinghelp)
+- [Installation guide](#Installationguide)
+- [How to run](#Howtorun)
+- [Demo](#Demo)
+- [Citation](#Citation)
 
 
 ## Overview
