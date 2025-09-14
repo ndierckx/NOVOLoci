@@ -1,1 +1,27 @@
+Project:
+-----------------------
+Project name          = 16p13_demo
+Assembly length       = 400000
+Save assembled reads  = 
+Seed Input            = Seed_16p13.fasta
+Genome size           = 
+Ploidy                = 2
+Circular              = 
+Threads               = 10
+Output path           = 16p13_demo/
+TMP path              = 16p13_demo/TMP/
 
+Nanopore reads:
+-----------------------
+Nanopore reads        = 16p13_filtered_reads.fasta.gz
+Local DB and NP reads =
+Sequencing depth NP   = 25
+R10                   =
+Min read length NP    = 5000
+
+PacBio reads:
+-----------------------
+PacBio reads          = 
+Local DB and PB reads = 
+Sequencing depth PB   = 
+Min read length PB    =
