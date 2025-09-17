@@ -104,6 +104,10 @@ Every parameter of the configuration file is explained below.
 
 ## Demo
 
+The demo contains a config file, seed sequence and ONT dataset for the targeted assembly of a 400 kbp region of 16p13 in the Human genome.
+After installing NOVOLoci, you can try to run the demo, the assembly should be complete within 20 minutes on a standard laptop.
+
+
 ## Citation
 
 https://www.biorxiv.org/content/10.1101/2025.08.08.669243v1.abstract
