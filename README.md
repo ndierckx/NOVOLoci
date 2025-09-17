@@ -103,9 +103,13 @@ Every parameter of the configuration file is explained below.
 ### 3. Run NOVOLoci
 
 conda       : <code>novoloci -c config.txt</code>
+
 Docker      : <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
+
 Singularity : <code>singularity exec novoloci_latest.sif NOVOLoci0.3.pl -c config.txt</code>
+
 Local       : <code>perl NOVOLoci0.3.pl -c config.txt</code>
+
 
 ## Demo
 
