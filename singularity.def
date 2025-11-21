@@ -1,5 +1,5 @@
 Bootstrap: docker
-From: ubuntu:24.10
+From: ubuntu:24.04
 
 %labels
     Author      Nicolas Dierckxsens
