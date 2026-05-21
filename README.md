@@ -76,7 +76,7 @@ OR
 ### Install dependencies locally
 
 - Install BLAST
-- Install kalign3
+- Install kalign
 - Install Perl modules: MCE::Child, MCE::Channel and Parallel::ForkManager
   
   <code>cpan install MCE</code>
