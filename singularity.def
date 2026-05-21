@@ -3,7 +3,7 @@ From: ubuntu:24.04
 
 %labels
     Author      Nicolas Dierckxsens
-    Version     v0.5
+    Version     v0.7
     Maintainer  ndierckx@github
 
 %environment
@@ -22,7 +22,7 @@ From: ubuntu:24.04
       curl \
       git \
       ncbi-blast+ \
-      mafft \
+      kalign \
       cpanminus \
       libparallel-forkmanager-perl \
       libmce-perl \
@@ -36,12 +36,12 @@ From: ubuntu:24.04
 
 %runscript
     # default entrypoint when user does: singularity run novoloci.sif ...
-    exec perl /opt/novoloci/NOVOLoci0.5.pl "$@"
+    exec perl /opt/novoloci/NOVOLoci0.7.pl "$@"
 
 %help
     NOVOLoci container with all dependencies:
       • BLAST+ (ncbi-blast+)
-      • MAFFT
+      • kalign
       • Perl modules MCE & Parallel::ForkManager
     Usage:
       singularity build novoloci.sif Singularity.def
