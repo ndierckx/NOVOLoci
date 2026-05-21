@@ -76,14 +76,14 @@ OR
 ### Install dependencies locally
 
 - Install BLAST
-- Install MAFFT
+- Install kalign3
 - Install Perl modules: MCE::Child, MCE::Channel and Parallel::ForkManager
   
   <code>cpan install MCE</code>
   
   <code>cpan install Parallel::ForkManager</code>
   
-  <code>perl NOVOLoci0.3.pl -c config.txt</code>
+  <code>perl NOVOLoci0.7.pl -c config.txt</code>
 
 ## How to run
 
@@ -106,9 +106,9 @@ conda       : <code>novoloci -c config.txt</code>
 
 Docker      : <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
 
-Singularity : <code>singularity exec novoloci_latest.sif NOVOLoci0.3.pl -c config.txt</code>
+Singularity : <code>singularity exec novoloci_latest.sif NOVOLoci0.7.pl -c config.txt</code>
 
-Local       : <code>perl NOVOLoci0.3.pl -c config.txt</code>
+Local       : <code>perl NOVOLoci0.7.pl -c config.txt</code>
 
 
 ## Demo
