@@ -3,8 +3,8 @@ FROM ubuntu:24.04
 
 # 2. Metadata
 LABEL maintainer="ndierckx@github" \
-      version="0.5" \
-      description="NOVOLoci: BLAST+ • MAFFT • Perl MCE & Parallel::ForkManager"
+      version="0.7" \
+      description="NOVOLoci: BLAST+ • kalign3 • Perl MCE & Parallel::ForkManager"
 
 # 3. Environment
 ENV LC_ALL=C.UTF-8 \
@@ -15,7 +15,7 @@ ENV LC_ALL=C.UTF-8 \
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
       ncbi-blast+ \
-      mafft \
+      kalign \
       cpanminus \
       libparallel-forkmanager-perl \
       libmce-perl \
@@ -36,4 +36,4 @@ WORKDIR /opt/novoloci
 ENV PATH=/opt/novoloci:$PATH
 
 # 8. Default entrypoint
-ENTRYPOINT ["perl", "NOVOLoci0.5.pl"]
+ENTRYPOINT ["perl", "NOVOLoci0.7.pl"]
