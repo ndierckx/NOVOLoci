@@ -27361,6 +27361,9 @@ AFTER_EXT:
 						my $C_score = $q_score_tmp[2];
 						my $T_score = $q_score_tmp[3];
 						my $G_score = $q_score_tmp[4];
+						my %nuc_score;
+						undef %nuc_score;
+
 						my $gap_score = $q_score_tmp[5];
 						my $homo_nuc = "";
 						if ($before3 eq "AAA" && $after3 eq "AAA")
@@ -27420,12 +27423,16 @@ AFTER_EXT:
 							#$no_homopolymer_AF = 1.1;
 							#$gap_AF = 1;
 						}
+						$nuc_score{'A'} = $A_score;
+						$nuc_score{'C'} = $C_score;
+						$nuc_score{'T'} = $T_score;
+						$nuc_score{'G'} = $G_score;
 						my $total_tmp = $A_score+$C_score+$T_score+$G_score+$gap_score;
 LOWER_DD:						
 						if (($A_score > $C_score*$dd && $A_score > $T_score*$dd && $A_score > $G_score*$dd &&
 						   ($A_score > $gap_score*$no_homopolymer_AF || ($A_score > $gap_score*$homopolymer_AF && ($before4 eq "AAAA" || $after3 eq "AAA"))))
 						   || ($A_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-						   || ($A_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "A" && $homo_nuc+$A_score > $total_tmp*0.8))
+						   || ($A_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "A" && $nuc_score{$homo_nuc}+$A_score > $total_tmp*0.8))
 						{
 							$read_polished .= "A";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." A POLISHED\n";
@@ -27433,7 +27440,7 @@ LOWER_DD:
 						elsif (($C_score > $A_score*$dd && $C_score > $T_score*$dd && $C_score > $G_score*$dd && 
 						      ($C_score > $gap_score*$no_homopolymer_AF || ($C_score > $gap_score*$homopolymer_AF && ($before4 eq "CCCC" || $after3 eq "CCC"))))
 							  || ($C_score > $total_tmp*0.35 && (($before4 eq "AAAA" && $A_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-							  || ($C_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "C" && $homo_nuc+$C_score > $total_tmp*0.8))
+							  || ($C_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "C" && $nuc_score{$homo_nuc}+$C_score > $total_tmp*0.8))
 						{
 							$read_polished .= "C";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." C POLISHED\n";
@@ -27441,7 +27448,7 @@ LOWER_DD:
 						elsif (($T_score > $C_score*$dd && $T_score > $A_score*$dd && $T_score > $G_score*$dd &&
 						      ($T_score > $gap_score*$no_homopolymer_AF || ($T_score > $gap_score*$homopolymer_AF && ($before4 eq "TTTT" || $after3 eq "TTT"))))
 							   || ($T_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "AAAA" && $A_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-							   || ($T_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "T" && $homo_nuc+$T_score > $total_tmp*0.8))
+							   || ($T_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "T" && $nuc_score{$homo_nuc}+$T_score > $total_tmp*0.8))
 						{
 							$read_polished .= "T";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." T POLISHED\n";
@@ -27449,7 +27456,7 @@ LOWER_DD:
 						elsif (($G_score > $C_score*$dd && $G_score > $T_score*$dd && $G_score > $A_score*$dd && 
 						      ($G_score > $gap_score*$no_homopolymer_AF || ($G_score > $gap_score*$homopolymer_AF && ($before4 eq "GGGG" || $after3 eq "GGG"))))
 							   || ($G_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "AAAA" && $A_score > $total_tmp*0.35)))
-							   || ($G_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "G" && $homo_nuc+$G_score > $total_tmp*0.8))
+							   || ($G_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "G" && $nuc_score{$homo_nuc}+$G_score > $total_tmp*0.8))
 						{
 							$read_polished .= "G";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." G POLISHED\n";
