@@ -204,6 +204,8 @@ my %ref_start_trim_NP;
 undef %ref_start_trim_NP;
 my %long_read_start_trim_PB;
 undef %long_read_start_trim_PB;
+my %ref_start_trim_PB;
+undef %ref_start_trim_PB;
 my %store_mismatches_NP;
 undef %store_mismatches_NP;
 my %store_mismatches_all_NP;
@@ -274,7 +276,7 @@ GetOptions (
             "c=s" => \$config,
             ) or die "Incorrect usage!\n";
 
-open(CONFIG, $config) or die "Error:Can't open the configuration file, please check the manual!\n\nUsage: perl NOVOLoci0.2.pl -c config.txt\n";
+open(CONFIG, $config) or die "Error:Can't open the configuration file, please check the manual!\n\nUsage: perl NOVOLoci0.8.pl -c config.txt\n";
 
 while (my $line = <CONFIG>)
 {
@@ -682,7 +684,7 @@ else
 
 print "\n\n-----------------------------------------------";
 print "\nNOVOLoci\n";
-print "Version 0.7\n";
+print "Version 0.8\n";
 print "Author: Nicolas Dierckxsens, (c) 2022-2026\n";
 print "-----------------------------------------------\n\n";
 
@@ -719,7 +721,7 @@ print "Min read length PB    = ".$minimum_read_length_PB."\n\n";
 
 print OUTPUT4 "\n\n-----------------------------------------------";
 print OUTPUT4 "\nNOVOLoci\n";
-print OUTPUT4 "Version 0.7\n";
+print OUTPUT4 "Version 0.8\n";
 print OUTPUT4 "Author: Nicolas Dierckxsens, (c) 2022-2026\n";
 print OUTPUT4 "-----------------------------------------------\n\n";
 
@@ -761,6 +763,10 @@ if (($sequencing_depth_NP < 1 || $sequencing_depth_NP eq "") && ($NP_reads ne ""
 if (($sequencing_depth_PB < 1 || $sequencing_depth_PB eq "") && ($PB_reads ne "" || $input_reads_DB_folder_PB ne "") && $genome_size eq "")
 {
 	die "\nPlease give an estimation of the PacBio sequencing depth in the config file!\n";
+}
+if ($assembly_length_max eq "")
+{
+    die "\nThe 'Assembly length' option in the config file is empty!\nSet it to 'WG' for whole-genome assembly, to a number (in bp) for targeted assembly (also requires a seed sequence), or to the path of an existing assembly to refine.\n";
 }
 if ($assembly_length_max eq "WG" && $seed_input0 ne "")
 {
@@ -814,7 +820,7 @@ if ($save_reads eq "no")
     $save_reads = "";
 }
 
-my $USAGE = "\nUsage: perl NOVOLoci0.7.pl -c config_example.txt";
+my $USAGE = "\nUsage: perl NOVOLoci0.8.pl -c config_example.txt";
 
 if (($NP_reads ne "" || $input_reads_DB_folder_NP ne "") && ($PB_reads ne "" || $input_reads_DB_folder_PB ne ""))
 {
@@ -1097,7 +1103,7 @@ if ($variance_detection eq "yes")
 if ($variance_detection eq "yes")
 {
     my ($wday, $mon, $mday, $hour, $min, $sec, $year) = localtime;
-    my @localtime = split / /, localtime;
+    my @localtime = split ' ', localtime;
     my %mon2num = qw(
     Jan 01  Feb 02  Mar 03  Apr 04  May 05  Jun 06
     Jul 07  Aug 08  Sep 09  Oct 10 Nov 11 Dec 12
@@ -1386,7 +1392,7 @@ if ($NP_reads ne "" || $input_reads_DB_folder_NP ne "")
                 delete $NP_reads{$NP_reads_tmp};
                 my $count_lines = qx(wc -l $new_filename);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$new_filename} = $count_lines[0];
             }
@@ -1405,7 +1411,7 @@ if ($NP_reads ne "" || $input_reads_DB_folder_NP ne "")
                 #$file_sizes{$NP_reads_tmp}{'2'} = $filesize;
                 my $count_lines = qx(wc -l $NP_reads_tmp);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$NP_reads_tmp} = $count_lines[0];
             }        
@@ -1482,7 +1488,7 @@ NP_READS_DB:
 COUNT_LINES:                   
                     my $count_lines = qx(wc -l $output_tmp);
                     chomp($count_lines);
-                    my @count_lines = split /\s+/, $count_lines;
+                    my @count_lines = split ' ', $count_lines;
                     my $count_lines2 = $count_lines[0];
 
                     if ($count_lines2 eq $combined_lines)
@@ -1562,7 +1568,7 @@ COUNT_LINES:
 				
 				my $count_lines = qx(wc -l $NP_reads_tmp2);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$NP_reads_tmp2} = $count_lines[0];
 			}
@@ -1650,11 +1656,11 @@ COUNT_LINES:
                 my $command = "wc -l ".$NP_reads_tmp;
                 my $lines = `$command`;
                 chomp($lines);
-                my @line_count = split / /, $lines;
-                $read_limit = $subsample*($line_count[0]/4);
+                my @line_count = split ' ', $lines;
+                $read_limit += $subsample*($line_count[0]/4);
                 if ($quality_score_long eq "")
                 {
-                    $read_limit = $subsample*($line_count[0]/2);
+                    $read_limit += $subsample*($line_count[0]/2);
                 }
             }
     
@@ -1969,17 +1975,22 @@ elsif ($NP_reads ne "" || $input_reads_DB_folder_NP ne "")
 		$count_tmp++;
 		if ($count_tmp eq '4')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$total_read_length_NP = $line_tmp[3];
+		}
+		if ($count_tmp eq '5')
+		{
+			my @line_tmp = split ' ', $line_tmp;
+			$N50_NP = $line_tmp[2];
 		}
 		if ($count_tmp eq '6')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$average_length_NP = $line_tmp[4];
 		}
 		if ($count_tmp eq '10')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$removed_reads_total_length_NP = $line_tmp[4];
 		}
 	}
@@ -2188,7 +2199,7 @@ if ($PB_reads ne "" || $input_reads_DB_folder_PB ne "")
                 delete $PB_reads{$PB_reads_tmp};
                 my $count_lines = qx(wc -l $new_filename);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$new_filename} = $count_lines[0];
             }
@@ -2205,7 +2216,7 @@ if ($PB_reads ne "" || $input_reads_DB_folder_PB ne "")
 
                 my $count_lines = qx(wc -l $PB_reads_tmp);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$PB_reads_tmp} = $count_lines[0];
             }        
@@ -2277,7 +2288,7 @@ PB_READS_DB:
 COUNT_LINES_PB:                   
                     my $count_lines = qx(wc -l $output_tmp);
                     chomp($count_lines);
-                    my @count_lines = split /\s+/, $count_lines;
+                    my @count_lines = split ' ', $count_lines;
                     my $count_lines2 = $count_lines[0];
 
                     if ($count_lines2 eq $combined_lines)
@@ -2353,7 +2364,7 @@ COUNT_LINES_PB:
 				
 				my $count_lines = qx(wc -l $PB_reads_tmp2);
                 chomp($count_lines);
-                my @count_lines = split /\s+/, $count_lines;
+                my @count_lines = split ' ', $count_lines;
                 $total_lines += $count_lines[0];
                 $file_lines{$PB_reads_tmp2} = $count_lines[0];
 			}
@@ -2421,11 +2432,7 @@ COUNT_LINES_PB:
 
             my $no_quality_score_long_tmp = substr $thirdLine_long, 0, 1;
             my $quality_score_long = "";
-            if ($thirdLine_long eq "+")
-            {
-                $quality_score_long = "yes";
-            }
-			if ($thirdLine_long eq "+" || ($thirdLine_long_first eq "+" && length($thirdLine_long) < (length($secondLine_long)-10)))
+            if ($thirdLine_long eq "+" || ($thirdLine_long_first eq "+" && length($thirdLine_long) < (length($secondLine_long)-10)))
             {
                 $quality_score_long = "yes";
             }
@@ -2437,10 +2444,10 @@ COUNT_LINES_PB:
                 my $lines = `$command`;
                 chomp($lines);
                 my @line_count = split / /, $lines;
-                $read_limit = $subsample*($line_count[0]/4);
+                $read_limit += $subsample*($line_count[0]/4);
                 if ($quality_score_long eq "")
                 {
-                    $read_limit = $subsample*($line_count[0]/2);
+                    $read_limit += $subsample*($line_count[0]/2);
                 }
             }
             
@@ -2521,7 +2528,7 @@ FILE_LONG_PB:while (my $line = <$FILE_LONG>)
                     my $pos_tmp = '0';
                     $long_id_PB++;
                     
-                    my $id_tmpi = $PB_reads{$PB_reads_tmp}.$long_id_PB;
+                    $id_tmpi = $PB_reads{$PB_reads_tmp}.$long_id_PB;
                     if ($keep_read_ids eq "yes")
                     {
                         $id_tmpi = $PB_reads{$PB_reads_tmp}.$id_read;
@@ -2617,8 +2624,8 @@ FILE_LONG_PB:while (my $line = <$FILE_LONG>)
             }
             else
             {
-                $ret_data_PB{$pid_PB} = $DB_direc_tmp;
-                $ret_data2_PB{$pid_PB} = $DB_output_tmp;
+                $ret_data_PB{'1'} = $DB_direc_tmp;
+                $ret_data2_PB{'1'} = $DB_output_tmp;
                 $read_count_PB += $read_count_tmp;
                 $total_read_length_PB += $total_read_length_tmp;
                 $min_read_length_PB = $min_read_length_tmp;
@@ -2676,7 +2683,7 @@ if ($read_count_PB > 0)
     print STATS_PB "Total count             : ".$read_count_PB."\n";
 	print STATS_PB "Total length            : ".$total_read_length_PB." bp\n";
     print STATS_PB "N50                     : ".$N50_PB." bp\n";
-    print STATS_PB "Average read length     : ".int($total_read_length_PB/$read_count_PB)." bp\n";
+    print STATS_PB "Average read length     : ".$average_length_PB." bp\n";
     print STATS_PB "Max read length         : ".$max_read_length_PB." bp\n";
     print STATS_PB "Min read length         : ".$min_read_length_PB." bp\n";
     print STATS_PB "Reads below min length  : ".$removed_reads_min_PB."\n";
@@ -2717,22 +2724,22 @@ elsif ($PB_reads ne "" || $input_reads_DB_folder_PB ne "")
 		$count_tmp++;
 		if ($count_tmp eq '4')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$total_read_length_PB = $line_tmp[3];
 		}
 		if ($count_tmp eq '5')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
-			$N50_PB = $line_tmp[5];
+			my @line_tmp = split ' ', $line_tmp;
+			$N50_PB = $line_tmp[2];
 		}
 		if ($count_tmp eq '6')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$average_length_PB = $line_tmp[4];
 		}
 		if ($count_tmp eq '10')
 		{
-			my @line_tmp = split /\s+/, $line_tmp;
+			my @line_tmp = split ' ', $line_tmp;
 			$removed_reads_total_length_PB = $line_tmp[4];
 		}
 	}
@@ -2815,6 +2822,28 @@ sub syscmd {
     else {
         #printf "SYSTEM: $cmd exited with status %d\n", $status >> 8;
     }
+}
+
+# Split-lineage helpers (targeted/non-WG mode): contigs are named by appending a
+# split tag to their parent. The FIRST haplotype split of X gives X_HAP1 / X_HAP2;
+# every later split appends a globally-numbered cN tag to BOTH children
+# (e.g. X_HAP2 -> X_HAP2c2 / X_HAP2c3 -> X_HAP2c2c6 / X_HAP2c2c7 ...). The pre-split
+# parent (e.g. X_HAP2) can survive but is NOT a sibling of its cN children.
+# split_parent() strips the LAST tag and returns (parent, type, value).
+sub split_parent {
+    my ($x) = @_;
+    return ($1, 'c',   $2) if $x =~ /^(.*)c(\d+)$/;       # later split:  ...cN
+    return ($1, 'HAP', $2) if $x =~ /^(.*)_HAP(\d+)$/;    # first split:  ..._HAPN
+    return ();
+}
+# Immediate split siblings = same immediate parent, same tag type, different value.
+sub from_same_split {
+    my ($a, $b) = @_;
+    return 0 if !defined $a || !defined $b || $a eq $b;
+    my @pa = split_parent($a);
+    my @pb = split_parent($b);
+    return 0 unless @pa && @pb;
+    return ($pa[0] eq $pb[0] && $pa[1] eq $pb[1] && $pa[2] ne $pb[2]) ? 1 : 0;
 }
 
 
@@ -3447,8 +3476,6 @@ if ($assembly_length_max eq "WG" && $WG_all_reads_checked eq "")
 	{
 		$WG_all_reads_checked = "yes";
 		my $extra_reads_tmp = keys %WG_rejected_reads;
-		print "Extra reads: ".$extra_reads_tmp."\n\n";
-		print OUTPUT4 "Extra reads: ".$extra_reads_tmp."\n\n";
 		if ($extra_reads_tmp > 0)
 		{
 			print "Remaining reads: ".$extra_reads_tmp."\n\n";
@@ -4084,6 +4111,8 @@ DB_MERGE2:
 				my $highest = "";
 				foreach my $id_blast_tmp2 (keys %merge_matches)
 				{
+					# targeted mode: never merge two contigs from the same haplotype split
+					next if $assembly_length_max ne "WG" && from_same_split($id, $id_blast_tmp2);
 					foreach my $acc_tmp (sort {$b <=> $a} keys %{$merge_matches{$id_blast_tmp2}})
 					{
 						if ($highest eq "")
@@ -5199,6 +5228,12 @@ PB_READS:
 						delete $save_alignment_data_PB{$seed_id};
 						delete $rejected_alignment_data_PB{$seed_id};
 						delete $long_read_start_trim_PB{$seed_id};
+						delete $ref_start_trim_PB{$seed_id};
+						delete $store_mismatches_PB{$seed_id};
+						delete $store_mismatches_all_PB{$seed_id};
+						delete $store_mismatches_N_PB{$seed_id};
+						delete $SNP_matches_PB{$seed_id};
+						delete $SNP_no_matches_PB{$seed_id};
 					}
 				}
 
@@ -5284,7 +5319,7 @@ LONGER_LAST_600_PB:
                 foreach my $pid_tmp (keys %ret_data_PB)
                 {
                     my $file_tmp = $TMP_directory."blast_tmp_DB_PB_".$id."_".$y."_".$pid_tmp.".txt";
-                    my $command_DB = "blastn -query ".$query_file_DB." -db ".$ret_data_PB{$pid_tmp}." -out ".$file_tmp." -outfmt 7 -qcov_hsp_perc ".$query_coverage." &";
+                    my $command_DB = "blastn -query ".$query_file_DB." -db ".$ret_data_PB{$pid_tmp}." -out ".$file_tmp." -outfmt 7 -qcov_hsp_perc ".$query_coverage." -num_threads 2 &";
                     syscmd($command_DB);             
                     $output_files_DB{$file_tmp} = undef;
                     $output_files_DB2{$file_tmp} = undef;
@@ -5628,14 +5663,20 @@ DB_RESULTS_PB1:
 					delete $save_alignment_data_PB{$seed_id};
 					delete $rejected_alignment_data_PB{$seed_id};
 					delete $long_read_start_trim_PB{$seed_id};
+					delete $ref_start_trim_PB{$seed_id};
+					delete $store_mismatches_PB{$seed_id};
+					delete $store_mismatches_all_PB{$seed_id};
+					delete $store_mismatches_N_PB{$seed_id};
+					delete $SNP_matches_PB{$seed_id};
+					delete $SNP_no_matches_PB{$seed_id};
 					$y++;
 					$y{$id} = $y;
-					
+
 					foreach my $pos_split (keys %{$split_positions{$id}})
 					{
 						if (exists($split_positions_VIP{$id}{$pos_split}))
 						{}
-						if ($pos_split > $position+length($best_extension)+150)
+						elsif ($pos_split > $position+length($best_extension)+150)
 						{
 							delete $split_positions{$id}{$pos_split};
 						}
@@ -5708,6 +5749,8 @@ LOWER_ACCURACY:
 				undef %long_read_end_pos_save;
 				my %long_read_start_pos_save;
 				undef %long_read_start_pos_save;
+				my %assembly_start_pos_save;
+				undef %assembly_start_pos_save;
 				my %rejected_reads_save;
 				undef %rejected_reads_save;
                 my %multi_match;
@@ -5728,9 +5771,8 @@ LOWER_ACCURACY:
                 my $match_too_short = '0';
                 my $overlap_too_short = '0';
                 my $accuracy_rejection = '0';
-				my $accuracy_threshold = "0.".$query_accuracy;
                 my $multi_match_rejection = '0';
-                my $ref_end_rejection_threshold = '100';
+                my $read_pos_discontinuous_rejection = '0';
 
                 my %score_matches_save;
 				undef %score_matches_save;
@@ -5960,6 +6002,7 @@ DOUBLE_MATCH_PB1:
 									print OUTPUT_TRIM_REF_PB $trimmed_ref_seq;
 									close OUTPUT_TRIM_REF_PB;
 									$blast_ref_trim_PB{$seed_id}{$id_tmp2} = $length_tmp_final - $new_ref_length;
+									$ref_part{$id_tmp2} = $new_ref_length;
 								}
 							}
 						}
@@ -6043,7 +6086,7 @@ BLAST1_PB:      foreach my $length_tmp (sort {$a <=> $b} keys %input_files_blast
 								{
 									print {$filehandle{$seed_id2}} $length_tmp." 0ERROR\n";
 									print {$filehandle{$seed_id2}} $id_tmp3." 0ERRORbbb\n";
-									#goto END1;
+									next BLAST1_PB;
 								}
 								#my $N_correction = ($N_count_ref/$ref_part{$id_tmp3})*100;
 								if (exists($double_matches{$id_tmp3}))
@@ -6121,6 +6164,7 @@ BLAST1_PB:      foreach my $length_tmp (sort {$a <=> $b} keys %input_files_blast
 								my $assembly_end_pos_high = "1";
 								my $long_read_end_pos_high = "1";
 								my $match_confirmed = "";
+								my $blast_ref_trim_PB_original = $blast_ref_trim_PB{$seed_id}{$id_tmp3};
 
 INPUT_BLAST_PB:     			while (my $line2 = <INPUT_BLAST>)
 								{                                                     
@@ -6203,14 +6247,7 @@ INPUT_BLAST_PB:     			while (my $line2 = <INPUT_BLAST>)
 												$accuracy = ($accuracy_tmp+$accuracy_tmp2)/2   
 											}
 
-											# Adjust positions if trimmed BLAST was used
-											if ($blast_ref_trim_PB{$seed_id}{$id_tmp3} > 0)
-											{
-												$assembly_start_pos += $blast_ref_trim_PB{$seed_id}{$id_tmp3};
-												$assembly_end_pos   += $blast_ref_trim_PB{$seed_id}{$id_tmp3};
-												$long_read_start_pos = $long_read_start_trim_PB{$seed_id}{$id_tmp3};
-											}
-											# Cleanup trimmed temp files
+											# Cleanup trimmed temp files (only fires for first Hsp since $blast_ref_trim_PB is reset after)
 											if ($blast_ref_trim_PB{$seed_id}{$id_tmp3} > 0)
 											{
 												unlink $TMP_directory."trimmed_ref_PB_".$id_tmp3."_".$y.".fasta";
@@ -6263,11 +6300,29 @@ INPUT_BLAST_PB:     			while (my $line2 = <INPUT_BLAST>)
 												delete $save_alignment_data_PB{$seed_id}{$id_tmp3};
 												goto SKIP_BLAST1_PB;
 											}
+											elsif ($blast_ref_trim_PB_original > 0
+												&& exists($long_read_start_trim_PB{$seed_id}{$id_tmp3})
+												&& exists($ref_start_trim_PB{$seed_id}{$id_tmp3}))
+											{
+												my $expected_alignment_length  = $position - $ref_start_trim_PB{$seed_id}{$id_tmp3};
+												my $expected_long_read_end_pos = $long_read_start_trim_PB{$seed_id}{$id_tmp3} + $expected_alignment_length;
+												my $position_drift             = abs($long_read_end_pos - $expected_long_read_end_pos);
+												if ($position_drift > 1500)
+												{
+													print {$filehandle{$seed_id2}} $id_tmp3." ".$long_read_end_pos." vs ".$expected_long_read_end_pos." drift=".$position_drift." READ_POS_DISCONTINUOUS_REJECTION\n";
+													$read_pos_discontinuous_rejection++;
+													delete $save_alignment_data_PB{$seed_id}{$id_tmp3};
+													$skip_id = "read_pos_discontinuous";
+													goto SKIP_BLAST1_PB;
+												}
+											}
 											elsif (exists($alignment_length_save{$id_tmp3}) && $alignment_length < $alignment_length_save{$id_tmp3}
 												   && (exists($extensions2{$id_tmp3}) || exists($extensions_unknown2{$id_tmp3}) || $alignment_length < $alignment_length_save{$id_tmp3}*0.5))
 											{
+												delete $exclude_reads_PB{$id}{$id_tmp3};
 												print {$filehandle{$seed_id2}} $id_tmp3." ".$alignment_length." REMOVE_DUPLICATE2\n";
 												$skip_id = "remove_duplicate";
+												$remove_duplicate_count++;
 												goto SKIP_BLAST1_PB;
 											}
 											elsif (exists($alignment_length_save{$id_tmp3}))
@@ -6298,13 +6353,18 @@ INPUT_BLAST_PB:     			while (my $line2 = <INPUT_BLAST>)
 												delete $save_alignment_data_PB{$id}{$id_tmp3};
 												delete $rejected_alignment_data_PB{$id}{$id_tmp3};
 												delete $long_read_start_trim_PB{$seed_id}{$id_tmp3};
+												delete $ref_start_trim_PB{$seed_id}{$id_tmp3};
 												$remove_duplicate_count++;
 											}
 											$alignment_length_save{$id_tmp3} = $alignment_length;
 											$alignment_length_save2{$alignment_length}{$id_tmp3} = undef;
-											$count_matches_with_high_scores++;   
+											$count_matches_with_high_scores++;
 											$long_read_end_pos_save{$id_tmp3} = $long_read_end_pos;
-											$long_read_start_pos_save{$id_tmp3} = $long_read_start_pos;
+											if ($blast_ref_trim_PB_original == 0)
+											{
+												$long_read_start_pos_save{$id_tmp3} = $long_read_start_pos;
+												$assembly_start_pos_save{$id_tmp3} = ($position-$ref_part{$id_tmp3})+$assembly_start_pos;
+											}
 											$match_confirmed = "yes";
 																			
 											my $long_read_tmp = "";
@@ -6535,14 +6595,11 @@ SPLIT_PB:                                   			foreach my $prev_splits (sort {$a
 																
 																if ($AT_rich_forward_tmp2 eq "" && $AT_rich_after_tmp2 eq "" && ($nuc_query eq "-" || $nuc_subject eq "-"))
 																{			
-																	if (exists($store_mismatches_PB{$seed_id}{$id_tmp3}))
-																	{
-																		$store_mismatches_PB{$seed_id}{$id_tmp3}{$track_query_full} = $nuc_query.",".$nuc_subject.",".$seq_tmp;
-																	}
-																	else
-																	{
-																		$store_mismatches_PB{$seed_id}{$id_tmp3}{$track_query_full} = $nuc_query.",".$nuc_subject.",".$seq_tmp;
-																	}
+																	$store_mismatches_PB{$seed_id}{$id_tmp3}{$track_query_full} = $nuc_query.",".$nuc_subject.",".$seq_tmp;
+																}
+																elsif ($nuc_query ne "-" && $nuc_subject ne "-" && $nuc_query_prev ne "-")
+																{
+																	$store_mismatches_PB{$seed_id}{$id_tmp3}{$track_query_full} = $nuc_query.",".$nuc_subject.",".$seq_tmp;
 																}
 															}
 SKIP_STORE_MISMATCH_PB:                                                    
@@ -7912,8 +7969,8 @@ MAFFT_PB:
 				my $time_maff3 = time;
                 my $time_mafft = $time_maff3 - $time_mafft1;
                 print {$filehandle{$seed_id2}} $time_mafft." TIME_MAFFT\n\n";
-				sleep(0.01);
- 
+				select(undef, undef, undef, 0.01);
+
 #merge kalign lines-------------------------------------------------------------------------------
 
                 my %subject_list;
@@ -8054,9 +8111,9 @@ MAFFT_PB:
 					#print {$filehandle{$seed_id2}} $subject_list{$subject_rank}."\n";
                 }
 				
-				#unlink $mafft_output_tmp;
+				unlink $mafft_output_tmp;
 				unlink $output_file6;
-				
+
                 my %ignore_reads;
 				undef %ignore_reads;
 IGNORE_REMOVED_READS_PB:
@@ -8194,28 +8251,29 @@ INPUT_MAFFT3_PB: while ((keys %subject_list > 2 || $only_2_reads eq "yes") && ((
                             $total_count_prev_patterns = '0';
                         }
                     }
-                    
+					
                     if (length($best_extension) > 110 && $clipped_ext eq "" && $find_haps_in_seed ne "yes")
                     {
                         my $m = '15';
+						my $m3 = '15';
 						my $best_extension_tmp_length = length($best_extension);
                         while ($m < length($best_extension)-10 && $clipped_ext eq "")
                         {
-                            my $check_start_assembly = substr $read, -$m, 15;
+                            my $check_start_assembly = substr $read, -$m, $m3;
                             $check_start_assembly =~ tr/N|\./\./;
                             my $best_extension_tmp = $best_extension;
-                            my $check_15 = $best_extension_tmp =~ s/$check_start_assembly//;
-                            if ($check_15 eq 1)
+                            my $check_15 = $best_extension_tmp =~ s/$check_start_assembly//g;
+                            if ($check_15 == 1)
                             {
                                 print {$filehandle{$seed_id2}} $best_extension." BEST_EXT\n";
                                 if ($best_extension =~ m/(.*$check_start_assembly)(.*)/)
                                 {
                                     $best_extension = $2;
-                                    my $best_extension_tmp = substr $best_extension, 0, $m-15+3;
-                                    my $best_extension_tmp2 = substr $best_extension, $m-15+3;
+                                    my $best_extension_tmp = substr $best_extension, 0, $m-$m3+3;
+                                    my $best_extension_tmp2 = substr $best_extension, $m-$m3+3;
                                     my $m2 = '14';
                                     my $matched = "";
-                                    while ($m2 > 5 && $matched eq "" && $m > 15)
+                                    while ($m2 > 5 && $matched eq "" && $m > $m3)
                                     {
                                         my $check_start_assembly2 = substr $read, -$m2, $m2;
                                         if ($best_extension_tmp =~ m/(.*$check_start_assembly2)(.*)/)
@@ -8227,9 +8285,9 @@ INPUT_MAFFT3_PB: while ((keys %subject_list > 2 || $only_2_reads eq "yes") && ((
                                         }
                                         $m2--;
                                     }
-                                    if ($matched ne "yes" && $m > 15)
+                                    if ($matched ne "yes" && $m > $m3)
                                     {
-                                        substr $best_extension, 0, $m-15, "";
+                                        substr $best_extension, 0, $m-$m3, "";
                                     }
                                 }
 
@@ -8245,6 +8303,10 @@ INPUT_MAFFT3_PB: while ((keys %subject_list > 2 || $only_2_reads eq "yes") && ((
 									$track_length_ext{$subject_rank} = length($seq_rank1c);
 								}
                             }
+							elsif ($check_15 > 1)
+							{
+								$m3++;
+							}
                             $m++;
                         }
                         if ($clipped_ext eq "yes")
@@ -10393,7 +10455,7 @@ HIGHEST_RANK_PB:
 											|| ($score_tmp > 5 && $rank_count_tmp > 2 && $SNP_check eq "yes2")
 											|| ($score_tmp > $highest_avg_score-2 && $score_tmp > 2.5 && $rank_count_tmp > $highest_rank_count && $first_no_match >= $highest_first_no_match)
 											|| ($score_tmp > $highest_avg_score*0.6 && ($post_pattern_match_extra eq "yes" || $SNP_check ne "") && ($first_no_match > $highest_first_no_match || $count_matches_tmp > $highest_count_matches))
-											|| ($post_pattern_match eq "yes3" && $score_tmp > 1 && $count_matches_tmp > 3 && $first_no_match > $highest_first_no_match && $score_tmp > $highest_avg_score*0.3))
+											|| ($post_pattern_match eq "yes3" && $score_tmp > 1 && $count_matches_tmp > 2 && $first_no_match > $highest_first_no_match && $score_tmp > $highest_avg_score*0.3))
 											&& ($count_matches_tmp > 1 || $highest_first_no_match eq "" || ($score_tmp > 10 && $rank_count_tmp > 3))
 											&& ($first_no_match > $highest_first_no_match-3 || $highest_first_no_match eq "" || ($first_no_match >= $highest_first_no_match && $rank_count_tmp > $highest_rank_count)))
 										{
@@ -10662,11 +10724,11 @@ READ_PATTERN_FINAL_PB:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 																	{
 																		$count_no_matches_tmp++;
 																	}
-																	if ($first_no_match eq "" && ($no_match ne "" || $match_tmp < 3))
+																	if ($first_no_match eq "" && $no_match ne "")
 																	{
 																		$first_no_match = $rank_tmp13;
 																	}
-																	elsif ($first_no_match eq "")
+																	elsif ($first_no_match eq "" && $match_tmp >= 3)
 																	{
 																		$first_no_match2++;
 																	}
@@ -10721,8 +10783,8 @@ READ_PATTERN_FINAL_PB:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 														}
 														my $save_pat_check = "";
 														
-														if ($count_pos_no_matches_tmp > 1 && $count_matches_tmp > 2 && $count_matches_tmp > 0.15*$count_total_tmp && ($count_no_matches_tmp/2)+$count_no_matches_tmp2 < 0.2*$count_matches_tmp
-															&& ($first_no_match > 10 || $count_matches_tmp > 5) && $add_no_match_reads eq "" && $add_rejected_reads eq "")
+														if (($count_pos_no_matches_tmp > 1 || $post_pattern_match eq "yes3") && $count_matches_tmp > 2 && ($count_matches_tmp > 0.15*$count_total_tmp || $post_pattern_match eq "yes3")
+															&& ($count_no_matches_tmp/2)+$count_no_matches_tmp2 < 0.2*$count_matches_tmp && ($first_no_match > 10 || $count_matches_tmp > 5) && $add_no_match_reads eq "" && $add_rejected_reads eq "")
 														{
 															print {$filehandle{$seed_id2}} $count_matches_tmp." ADD_ALL_SNP_PATTERN\n";
 															$remove_by_rejected = "yes";
@@ -10913,7 +10975,7 @@ READ_PATTERN_FINAL_PB:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 																			my $read_end_tmpi = substr $read, $pos_snp_tmp-$overlap-1, $overlap;											
 																			my $selected_nuc_tmp = substr $read, $pos_snp_tmp-1, 1;
 																			$selected_nuc_tmp =~ tr/actgn/ACTGN/;
-																			print {$filehandle{$seed_id2}} $seed_id."\t".$pos_snp_tmp."\t".$read_end_tmpi."\t".$selected_nuc_tmp." DUP_POS_TMP_HALLE2\n";		
+																			print {$filehandle{$seed_id2}} $seed_id."\t".$pos_snp_tmp."\t".$read_end_tmpi."\t".$selected_nuc_tmp." DUP_POS_TMP_HALL\n";		
 																			$split_positions_DUP{$seed_id}{$pos_snp_tmp} = $read_end_tmpi;
 																			$split_positions_DUP2{$seed_id}{$pos_snp_tmp} = $selected_nuc_tmp;
 																			$count_dup_pos_halle2++;
@@ -12588,6 +12650,38 @@ ALL_MISMATCHES_PB:
 							undef %mismatch_pattern;
 							my %mismatch_pattern_N;
 							undef %mismatch_pattern_N;
+							my %mismatch_pattern_all;
+							undef %mismatch_pattern_all;
+							my %split_patterns_final_score_no_rej;
+							undef %split_patterns_final_score_no_rej;
+							foreach my $nuc_tmp13 (sort {$a <=> $b} keys %split_patterns_final_score)
+							{
+								foreach my $rank_tmp13 (keys %{$split_patterns_final_score{$nuc_tmp13}})
+								{
+									if ($add_rejected_reads ne "" && $rank_tmp13 > $add_rejected_reads) { next; }
+									if ($add_no_match_reads ne "" && $rank_tmp13 > $add_no_match_reads) { next; }
+									$split_patterns_final_score_no_rej{$nuc_tmp13}{$rank_tmp13} = undef;
+								}
+							}
+							foreach my $nuc_tmp13 (sort {$a <=> $b} keys %split_patterns_final_score_no_rej)
+							{
+								my $count_ranks_tmp = keys %{$split_patterns_final_score_no_rej{$nuc_tmp13}};
+								if ($count_ranks_tmp > 2 && $count_ranks_tmp > 0.16*$total_nuc_count)
+								{
+									foreach my $rank_tmp13 (keys %{$split_patterns_final_score_no_rej{$nuc_tmp13}})
+									{
+										if (exists($rank_to_id{$rank_tmp13}))
+										{
+											my $id_tmpi = $rank_to_id{$rank_tmp13};
+											foreach my $pos_snp_tmp (sort {$a <=> $b} keys %{$store_mismatches_all_PB{$seed_id}{$id_tmpi}})
+											{
+												my @store_mismatches_all_PB = split /,/, $store_mismatches_all_PB{$seed_id}{$id_tmpi}{$pos_snp_tmp};
+												$mismatch_pattern_all{$pos_snp_tmp}{$nuc_tmp13}{$id_tmpi} = $store_mismatches_all_PB[0]."+".$store_mismatches_all_PB[1];
+											}
+										}
+									}
+								}
+							}
 							my $count_groups_tmp = '0';
 							foreach my $nuc_tmp13 (sort {$a <=> $b} keys %split_patterns_final_score)
 							{
@@ -12802,24 +12896,88 @@ ALL_MISMATCHES_PB:
 #Go back to resolve previous SNP position-----------------------------------------------------------------------------------------------------------------
 								elsif ($post_pattern_match eq "yes3")
 								{
+									undef %trace_back_split_NP_backup;
 									my $found_pos = "";
+									my $A1 = '2';
+									my $A2 = '3';
+									if ($high_quality_ONT eq "yes")
+									{
+										$A1 = '1';
+										$A2 = '1';
+									}
+									my $last_chance_go_back = "";
+LAST_CHANCE_GO_BACK_PB:
 									foreach my $pos_snp_tmp (sort {$a <=> $b} keys %mismatch_pattern_N)
 									{
 										my %N_matches;
 										undef %N_matches;
+										if (exists($quality_scores{$seed_id}{$pos_snp_tmp}))
+										{
+											my @q_score_tmp = split / /, $quality_scores{$seed_id}{$pos_snp_tmp};
+											my $total_tmp = $q_score_tmp[1]+$q_score_tmp[2]+$q_score_tmp[3]+$q_score_tmp[4]+$q_score_tmp[5];
+											my $count_check_tmp = '0';
+											my $count_check_tmp2 = '0';
+											my $count_check_tmp3 = '0';
+											my $UU = '1';
+											while ($UU < 5)
+											{
+												if ($q_score_tmp[$UU] > 0.15*$total_tmp) { $count_check_tmp++; }
+												if ($q_score_tmp[$UU] > 0.19*$total_tmp) { $count_check_tmp3++; }
+												if ($q_score_tmp[$UU] > 0.25*$total_tmp) { $count_check_tmp2++; }
+												$UU++;
+											}
+											if ($count_check_tmp eq '2' && $high_quality_ONT eq "yes")
+											{
+												$A1 = '1';
+												$A2 = '1';
+												if ($last_chance_go_back eq "yes" && $count_check_tmp2 eq '2')
+												{
+													$A1 = '0';
+													$A2 = '0';
+												}
+											}
+											elsif ($count_check_tmp eq '2' && $high_quality_ONT eq "")
+											{
+												$A1 = '2';
+												$A2 = '2';
+												if ($last_chance_go_back eq "yes" && $count_check_tmp2 eq '2')
+												{
+													$A1 = '1';
+													$A2 = '2';
+												}
+											}
+											if ($high_quality_ONT eq "yes" && $count_check_tmp3 ne '2' && $assembly_length_max ne "WG")
+											{
+												$A1 = '2';
+												$A2 = '3';
+											}
+										}
 										foreach my $nuc_split14 (keys %{$mismatch_pattern_N{$pos_snp_tmp}})
 										{
 											my $total_pattern_count_tmp = '0';
-											my $split_patterns_count_tmp = keys %{$split_patterns_final_score{$nuc_split14}};
+											my $split_patterns_count_tmp = keys %{$split_patterns_final_score_no_rej{$nuc_split14}};
+											my $gap_count_tmp = '0';
 											foreach my $nuc_tmp14 (keys %{$mismatch_pattern_N{$pos_snp_tmp}{$nuc_split14}})
 											{
 												$total_pattern_count_tmp += keys %{$mismatch_pattern_N{$pos_snp_tmp}{$nuc_split14}{$nuc_tmp14}};
+												if ($nuc_tmp14 eq '-')
+												{
+													$gap_count_tmp = keys %{$mismatch_pattern_N{$pos_snp_tmp}{$nuc_split14}{$nuc_tmp14}};
+												}
 											}
-											
+											if ($gap_count_tmp < $total_pattern_count_tmp*0.21)
+											{
+												$total_pattern_count_tmp -= $gap_count_tmp;
+											}
 											foreach my $nuc_tmp14 (keys %{$mismatch_pattern_N{$pos_snp_tmp}{$nuc_split14}})
 											{
 												my $nuc_count_tmp4 = keys %{$mismatch_pattern_N{$pos_snp_tmp}{$nuc_split14}{$nuc_tmp14}};
-												if ($nuc_count_tmp4 > 0.8*$total_pattern_count_tmp && $nuc_count_tmp4 > 3 && ($nuc_count_tmp4 > $split_patterns_count_tmp*0.45 || $nuc_count_tmp4 > 5))
+												my $A1_tmp = $A1;
+												if ($nuc_tmp14 eq "-" && $high_quality_ONT eq "yes")
+												{
+													$A1_tmp += 1;
+												}
+												if ($nuc_count_tmp4 > 0.8*$total_pattern_count_tmp && $nuc_count_tmp4 > $A1_tmp && ($nuc_count_tmp4 > $split_patterns_count_tmp*0.25 || $nuc_count_tmp4 > $A2))
 												{
 													$N_matches{$nuc_tmp14} = $nuc_count_tmp4;
 												}
@@ -12835,6 +12993,17 @@ ALL_MISMATCHES_PB:
 												{
 													$indel_check_tmp = "yes";
 												}
+											}
+											my $score_tmp = '0';
+											foreach my $nuc_tmp15 (keys %N_matches)
+											{
+												$score_tmp += $N_matches{$nuc_tmp15};
+											}
+											my $last_11i = substr $read, $pos_snp_tmp-12, 11;
+											my $N_checki = $last_11i =~ tr/N/N/;
+											if ($N_checki > 0)
+											{
+												$score_tmp *= 0.85;
 											}
 N_MATCHES_PB:								foreach my $nuc_tmp15 (keys %N_matches)
 											{
@@ -12865,6 +13034,7 @@ N_MATCHES_PB:								foreach my $nuc_tmp15 (keys %N_matches)
 													}
 													
 													$trace_back_split_NP{$id}{$pos_snp_tmp} = $last_11;
+												$trace_back_split_NP_backup{$score_tmp}{$pos_snp_tmp} = $last_11;
 													print {$filehandle{$seed_id2}} $last_11." LAST11\n";
 
 													if ($found_pos eq "")
@@ -12997,6 +13167,7 @@ ALL_MATCHES_PB:  							foreach my $nuc_tmp15 (keys %all_matches)
 												{
 													my $last_11 = substr $read, $pos_snp_tmp-12, 11;
 													$trace_back_split_NP{$id}{$pos_snp_tmp} = $last_11;
+												$trace_back_split_NP_backup{'0'}{$pos_snp_tmp} = $last_11;
 													print {$filehandle{$seed_id2}} length($read)." READ\n";
 													print {$filehandle{$seed_id2}} $pos_snp_tmp." POS\n";
 													print {$filehandle{$seed_id2}} $last_11." LAST10\n";
@@ -13012,6 +13183,12 @@ ALL_MATCHES_PB:  							foreach my $nuc_tmp15 (keys %all_matches)
 									if (($found_pos2 < $found_pos || $found_pos eq "") && $found_pos2 ne "")
 									{
 										$found_pos = $found_pos2;
+									}
+									if ($found_pos eq "" && $trace_back_check ne "" && $last_chance_go_back eq "")
+									{
+										$last_chance_go_back = "yes";
+										print {$filehandle{$seed_id2}} $trace_back_check." LAST_CHANCE_GO_BACK_PB\n";
+										goto LAST_CHANCE_GO_BACK_PB;
 									}
 									if ($found_pos ne "")
 									{
@@ -13378,6 +13555,173 @@ BASECALL2_PB:
                     }
                                     
 SKIP_INPUT_BLAST3_PB:                   
+					if ($trace_back_check ne "" && $nuc_match ne "N" && $nuc_match ne "" && ($nucs{"a"} > ($total_nuc_count-$nucs{"-"})*0.76 || $nucs{"c"} > ($total_nuc_count-$nucs{"-"})*0.76
+						|| $nucs{"t"} > ($total_nuc_count-$nucs{"-"})*0.76 || $nucs{"g"} > ($total_nuc_count-$nucs{"-"})*0.76 || $check_N_correction eq "yes"))
+					{
+						my $count_SNR = '0';
+						my $last_11_prev = $trace_back_split_NP{$id}{$trace_back_check};
+						my $N_check = $last_11_prev =~ tr/N/N/;
+						foreach my $subject_rank (sort {$a <=> $b} keys %subject_list)
+						{
+							my $p = '0';
+							my $k = $trace_back_check-($position+length($best_extension));
+							while ($p < $k+65)
+							{
+								my $next_11 = "";
+								my $p2b = '0';
+								my $pb = '1';
+								while ($p2b < 11 && $pb < 100)
+								{
+									my $nuc2 = substr $subject_list{$subject_rank}, $cp+$pb+$p, 1;
+									if ($nuc2 ne "-")
+									{
+										$next_11 .= $nuc2;
+										$p2b++;
+									}
+									$pb++;
+								}
+								if ($next_11 eq $last_11_prev)
+								{
+									$count_SNR++
+								}
+								elsif ($N_check > 0)
+								{
+									$last_11_prev =~ tr/N/\./;
+									if ($next_11 =~ m/$last_11_prev/)
+									{
+										$count_SNR++
+									}
+								}
+								$p++;
+							}
+						}
+						if ($count_SNR < $total_nuc_count*0.2 || $check_N_correction eq "yes")
+						{
+							my $posiie = length($best_extension)+$position-1;
+							my $read_end_tmpi = substr $best_extension, -$overlap-1, $overlap;
+							$split_positions_DUP{$seed_id}{$posiie} = $read_end_tmpi;
+							$split_positions_DUP2{$seed_id}{$posiie} = $nuc_match;
+							$split_positions_VIP{$seed_id}{$posiie} = $read_end_tmpi.",".$nuc_match;
+							print {$filehandle{$seed_id2}} $seed_id."\t".$trace_back_check."\t".$posiie."\t".$nuc_match."\t".$read_end_tmpi." DUP_POS_TMP00\n";
+							my $min_pos = $position+length($best_extension);
+							if ($trace_back_check ne $min_pos)
+							{
+								my $diff = $min_pos-$trace_back_check;
+								$trace_back_check += $diff;
+								print {$filehandle{$seed_id2}} $diff." MAKE_POS_COR\n";
+								foreach my $pos_tmp (keys %{$trace_back_split_NP{$id}})
+								{
+									if ($pos_tmp >= $trace_back_check)
+									{
+										my $new_pos_tmp = $pos_tmp+$diff;
+										$trace_back_split_NP{$id}{$new_pos_tmp} = $trace_back_split_NP{$id}{$pos_tmp};
+										delete $trace_back_split_NP{$id}{$pos_tmp};
+									}
+								}
+							}
+						}
+					}
+					elsif ($trace_back_check ne "" && $nuc_match ne "" && $VIP_position_check eq "")
+					{
+						my $found_pos = "";
+						foreach my $score_tmpi (sort {$b <=> $a} keys %trace_back_split_NP_backup)
+						{
+TRACE_BACK_POS_NEW_PB:
+							foreach my $pos_tmpi (sort {$b <=> $a} keys %{$trace_back_split_NP_backup{$score_tmpi}})
+							{
+								if ($pos_tmpi < $trace_back_check-5)
+								{
+									foreach my $pos_tb_tmp (keys %{$trace_back_split_NP{$id}})
+									{
+										if ($pos_tmpi > $pos_tb_tmp-50 && $pos_tmpi < $pos_tb_tmp+50)
+										{
+											next TRACE_BACK_POS_NEW_PB;
+										}
+									}
+									foreach my $pos_snp_tmp2 (keys %{$trace_back_split_NP{$id}})
+									{
+										if ($pos_snp_tmp2 > $pos_tmpi-1000 && $pos_snp_tmp2 < $pos_tmpi+1000)
+										{
+											if ($trace_back_split_NP_backup{$score_tmpi}{$pos_tmpi} eq $trace_back_split_NP{$id}{$pos_snp_tmp2})
+											{
+												next TRACE_BACK_POS_NEW_PB;
+											}
+										}
+									}
+									$trace_back_split_NP{$id}{$pos_tmpi} = $trace_back_split_NP_backup{$score_tmpi}{$pos_tmpi};
+									print {$filehandle{$seed_id2}} $pos_tmpi." TRACE_BACK_POS_NEW\n";
+									$found_pos = $pos_tmpi;
+									last;
+								}
+							}
+							last;
+						}
+						foreach my $score_tmpi (sort {$b <=> $a} keys %trace_back_split_NP_backup)
+						{
+							foreach my $pos_tmpi (sort {$b <=> $a} keys %{$trace_back_split_NP_backup{$score_tmpi}})
+							{
+								if ($pos_tmpi > $found_pos && $pos_tmpi < $trace_back_check)
+								{
+									$trace_back_split_NP{$id}{$pos_tmpi} = $trace_back_split_NP_backup{$score_tmpi}{$pos_tmpi};
+									print {$filehandle{$seed_id2}} $pos_tmpi." TRACE_BACK_POS2_NEW\n";
+								}
+							}
+						}
+						if ($found_pos ne "")
+						{
+							$read = substr $read, 0, $found_pos-800;
+							delete $exclude_reads_PB{$seed_id};
+							delete $save_alignment_data_PB{$seed_id};
+							delete $rejected_alignment_data_PB{$seed_id};
+							delete $long_read_start_trim_PB{$seed_id};
+							delete $ref_start_trim_PB{$seed_id};
+							$position = length($read);
+							$position{$id} = $position;
+							$seed{$id} = $read;
+							foreach my $pos_split (keys %{$split_positions{$id}})
+							{
+								if (exists($split_positions_VIP{$id}{$pos_split}))
+								{}
+								elsif ($pos_split > $position+length($best_extension)+150)
+								{
+									delete $split_positions{$id}{$pos_split};
+								}
+							}
+							foreach my $pos_split (keys %{$split_positions_DUP{$id}})
+							{
+								if (exists($split_positions_VIP{$id}{$pos_split}))
+								{}
+								elsif ($pos_split > $position+length($best_extension)+150)
+								{
+									delete $split_positions_DUP{$id}{$pos_split};
+									delete $split_positions_DUP2{$id}{$pos_split};
+								}
+							}
+							foreach my $id_read_tmp (keys %finished_reads_PB)
+							{
+								foreach my $length_tmp (keys %{$finished_reads_PB{$id_read_tmp}})
+								{
+									foreach my $id_tmp (keys %{$finished_reads_PB{$id_read_tmp}{$length_tmp}})
+									{
+										if ($id_tmp eq $id)
+										{
+											if ($finished_reads_PB{$id_read_tmp}{$length_tmp}{$id_tmp} > $position)
+											{
+												delete $finished_reads_PB{$id_read_tmp};
+											}
+										}
+									}
+								}
+							}
+							$best_extension = "";
+							if ($hap_compare_pos{$id} > $position)
+							{
+								$hap_compare_pos{$id} = $position;
+							}
+							print {$filehandle{$seed_id2}} $position." HALLE5b\n";
+							goto PB_READS;
+						}
+					}
                     if ($hap_position eq "" && $find_haps_in_seed ne "")
                     {
                         $extensions_seed{"HAP1"} .= $nuc_match;
@@ -13765,7 +14109,14 @@ END_PB:
                     if (exists($rank_to_id{$rank_c}))
                     {
                         my $id_c = $rank_to_id{$rank_c};
-                        $long_read_start_trim_PB{$seed_id}{$id_c} = $long_read_start_pos_save{$id_c};
+                        if (exists($long_read_start_pos_save{$id_c}))
+                        {
+                            $long_read_start_trim_PB{$seed_id}{$id_c} = $long_read_start_pos_save{$id_c};
+                        }
+                        if (exists($assembly_start_pos_save{$id_c}))
+                        {
+                            $ref_start_trim_PB{$seed_id}{$id_c} = $assembly_start_pos_save{$id_c};
+                        }
                     }
                 }
 				{
@@ -13775,6 +14126,7 @@ END_PB:
                     foreach my $id_mm (keys %{$store_mismatches_all_PB{$seed_id}}) { delete $store_mismatches_all_PB{$seed_id}{$id_mm} unless exists $active_ids_mm{$id_mm}; }
                     foreach my $id_mm (keys %{$store_mismatches_N_PB{$seed_id}})   { delete $store_mismatches_N_PB{$seed_id}{$id_mm}   unless exists $active_ids_mm{$id_mm}; }
 					foreach my $id_mm (keys %{$long_read_start_trim_PB{$seed_id}}) { delete $long_read_start_trim_PB{$seed_id}{$id_mm} unless exists $active_ids_mm{$id_mm}; }
+					foreach my $id_mm (keys %{$ref_start_trim_PB{$seed_id}})       { delete $ref_start_trim_PB{$seed_id}{$id_mm}       unless exists $active_ids_mm{$id_mm}; }
 					foreach my $pos_mm (keys %{$SNP_matches_PB{$seed_id}})    { foreach my $id_mm (keys %{$SNP_matches_PB{$seed_id}{$pos_mm}})    { delete $SNP_matches_PB{$seed_id}{$pos_mm}{$id_mm}    unless exists $active_ids_mm{$id_mm}; } delete $SNP_matches_PB{$seed_id}{$pos_mm}    unless keys %{$SNP_matches_PB{$seed_id}{$pos_mm}}; }
 					foreach my $pos_mm (keys %{$SNP_no_matches_PB{$seed_id}}) { foreach my $id_mm (keys %{$SNP_no_matches_PB{$seed_id}{$pos_mm}}) { delete $SNP_no_matches_PB{$seed_id}{$pos_mm}{$id_mm} unless exists $active_ids_mm{$id_mm}; } delete $SNP_no_matches_PB{$seed_id}{$pos_mm} unless keys %{$SNP_no_matches_PB{$seed_id}{$pos_mm}}; }
                 }
@@ -16591,16 +16943,12 @@ SKIP_BLAST1_NP:
                 }
                 foreach my $id_tmp (keys %printed_blast)
                 {
-                    if ($id_tmp ne "27a346083a25")
-											{
-												
 					unlink $TMP_directory."blast_tmp_".$id."_".$y."__".$id_tmp.".txt";
                     
                     if (exists($double_matches{$id_tmp}))
                     {
                         unlink $TMP_directory."blast_tmp_".$id."_".$y."_yes_".$id_tmp.".txt";
                     }
-											}
                 }
 				
 				if ($assembly_length_max eq "WG" && $y eq "1" && ($count_matches_with_high_scores > $sequencing_depth_NP*2 || ($total_matches < 10 && $total_matches < $sequencing_depth_NP*0.7)) && ($first_back_assembly eq "" || length($read) < 5000))
@@ -17785,8 +18133,8 @@ MAFFT_NP:
 				my $time_maff3 = time;
                 my $time_mafft = $time_maff3 - $time_mafft1;
                 print {$filehandle{$seed_id2}} $time_mafft." TIME_MAFFT\n\n";
-				sleep(0.05);
-				
+				select(undef, undef, undef, 0.05);
+
 #merge kalign lines-------------------------------------------------------------------------------
 
                 my %subject_list;
@@ -17990,10 +18338,13 @@ IGNORE_REMOVED_READS_NP:
 				my $best_extension_part = "";
                 my %nucs;
                 undef %nucs;
+				my %nucs2;
+                undef %nucs2;
                 my %nucs_rej;
 				undef %nucs_rej;
 
                 my $total_nuc_count = '0';
+				my $total_nuc_count2 = '0';
                 my $total_nuc_count_rej = '0';
 				my $local_pattern_matches2 = '0';
                 my $nuc1 = "";
@@ -18110,43 +18461,133 @@ INPUT_MAFFT3_NP: while ((keys %subject_list > 2 || $only_2_reads eq "yes") && ((
                             $total_count_prev_patterns = '0';
                         }
                     }
-                    if (length($best_extension) > 120 && $clipped_ext eq "" && $find_haps_in_seed ne "yes" && $NP_reads_support_SNR2 eq "")
+					if (length($best_extension) > 120 && $clipped_ext eq "" && $find_haps_in_seed ne "yes" && $NP_reads_support_SNR2 eq "")
                     {
                         my $m = '15';
+						my $m3 = '15';
 						my $best_extension_tmp_length = length($best_extension);
                         while ($m < length($best_extension)-10 && $clipped_ext eq "")
                         {
-                            my $check_start_assembly = substr $read, -$m, 15;
+                            my $check_start_assembly = substr $read, -$m, $m3;
                             $check_start_assembly =~ tr/N|\./\./;
-                            my $best_extension_tmp0 = $best_extension;
-							
-                            my $check_15 = $best_extension_tmp0 =~ s/$check_start_assembly//;
-                            if ($check_15 eq 1)
+                            my $best_extension_tmp = $best_extension;
+                            my $check_15 = $best_extension_tmp =~ s/$check_start_assembly//g;
+                            if ($check_15 == 1)
                             {
                                 print {$filehandle{$seed_id2}} $check_start_assembly." ".$best_extension." BEST_EXT_CLIP\n";
                                 if ($best_extension =~ m/(.*$check_start_assembly)(.*)/)
                                 {
                                     $best_extension = $2;
-                                    
-									print {$filehandle{$seed_id2}} $m." M\n";
-									print {$filehandle{$seed_id2}} $best_extension." BEST_EXT_CHOPPED\n";
-									my $diff_tmp = $best_extension_tmp_length-length($best_extension);
-									$clipped_ext = "yes";
-									$cp = $clipped_ext_pos{$diff_tmp};
-									foreach my $subject_rank (sort {$a <=> $b} keys %subject_list)
-									{				
-										my $seq_rank1c = substr $subject_list{$subject_rank}, 0, $cp;
-										$seq_rank1c =~ tr/-//d;
-										$track_length_ext{$subject_rank} = length($seq_rank1c);
-									}
-									last;
-
-                                    #my $M_seq = substr $best_extension, 0, $m-15, "";
-                                    #$ext_remove = $1.$M_seq;
-                                    #print {$filehandle{$seed_id2}} $ext_remove." EXT_REMOVE\n";   
+                                    my $best_extension_tmp = substr $best_extension, 0, $m-$m3+3;
+                                    my $best_extension_tmp2 = substr $best_extension, $m-$m3+3;
+                                    my $m2 = '14';
+                                    my $matched = "";
+                                    while ($m2 > 5 && $matched eq "" && $m > $m3)
+                                    {
+                                        my $check_start_assembly2 = substr $read, -$m2, $m2;
+                                        if ($best_extension_tmp =~ m/(.*$check_start_assembly2)(.*)/)
+                                        {
+                                            $best_extension = $2;
+                                            $best_extension .= $best_extension_tmp2;
+                                            $matched = "yes";
+                                            last
+                                        }
+                                        $m2--;
+                                    }
+                                    if ($matched ne "yes" && $m > $m3)
+                                    {
+                                        substr $best_extension, 0, $m-$m3, "";
+                                    }
                                 }
+
+                                print {$filehandle{$seed_id2}} $m." M\n";
+                                print {$filehandle{$seed_id2}} $best_extension." BEST_EXT_CHOPPED\n";
+                                my $diff_tmp = $best_extension_tmp_length-length($best_extension);
+                                $clipped_ext = "yes";
+								$cp = $clipped_ext_pos{$diff_tmp};
+								foreach my $subject_rank (sort {$a <=> $b} keys %subject_list)
+								{				
+									my $seq_rank1c = substr $subject_list{$subject_rank}, 0, $cp;
+									$seq_rank1c =~ tr/-//d;
+									$track_length_ext{$subject_rank} = length($seq_rank1c);
+								}
                             }
+							elsif ($check_15 > 1)
+							{
+								$m3++;
+							}
                             $m++;
+                        }
+                        if ($clipped_ext eq "yes")
+                        {
+                            $best_extension = "";
+                            $N = '0';
+                            undef %SNP_patterns_prev;
+                            undef %extensions_seed;
+                            undef %quality_scores_tmp;
+                            undef %quality_scores_gap_tmp;
+                            undef %extensions_seed;
+                            undef %best_read_score;
+							undef %total_count_prev_patterns;
+                            $total_count_prev_patterns = '0';
+							if ($find_haps_in_seed ne "")
+							{
+								$extensions_seed{'HAP1'} = $best_extension;
+								$extensions_seed{'HAP2'} = $best_extension;
+							}
+                        }
+                    }
+					
+                    if (length($best_extension) > 120 && $clipped_ext eq "" && $find_haps_in_seed ne "yes" && $NP_reads_support_SNR2 eq "")
+                    {
+                        my $best_extension_tmp_length = length($best_extension);
+
+                        # --- robust overlap clip (replaces the fragile 15-mer anchor search) ---
+                        # Largest k such that the last k bp of the assembled $read equal the first k
+                        # bp of $best_extension (a true suffix/prefix overlap), N/./| as wildcards and
+                        # a little long-read consensus noise tolerated. Taking the LONGEST consistent
+                        # overlap avoids (a) the old greedy-regex cutting at the LAST repeat copy and
+                        # deleting sequence in between, and (b) off-by errors when the read tail was
+                        # not found verbatim.
+                        my $min_overlap_clip = 31;
+                        my $max_mm_frac_clip = 0.06;
+                        my $rlen_clip = length($read);
+                        my $elen_clip = length($best_extension);
+                        my $kmax_clip = $elen_clip - 10;
+                        $kmax_clip = $rlen_clip if $rlen_clip < $kmax_clip;
+                        $kmax_clip = 5000 if $kmax_clip > 5000;
+                        my $rtail_clip = ($rlen_clip >= $kmax_clip) ? substr($read, -$kmax_clip) : $read;
+                        my $overlap_clip = 0;
+                        for (my $k = $kmax_clip; $k >= $min_overlap_clip; $k--)
+                        {
+                            my $r_suf = substr($rtail_clip, -$k);
+                            my $e_pre = substr($best_extension, 0, $k);
+                            my $allowed = int($k * $max_mm_frac_clip);
+                            my $mm = 0;
+                            for (my $i = 0; $i < $k; $i++)
+                            {
+                                my $ca = substr($r_suf, $i, 1);
+                                my $cb = substr($e_pre, $i, 1);
+                                next if $ca eq 'N' || $cb eq 'N' || $ca eq '.' || $cb eq '.' || $ca eq '|' || $cb eq '|';
+                                if ($ca ne $cb) { $mm++; last if $mm > $allowed; }
+                            }
+                            if ($mm <= $allowed) { $overlap_clip = $k; last; }
+                        }
+                        if ($overlap_clip >= $min_overlap_clip && exists $clipped_ext_pos{$overlap_clip})
+                        {
+                            print {$filehandle{$seed_id2}} substr($best_extension, 0, $overlap_clip)." ".$best_extension." BEST_EXT_CLIP\n";
+                            $best_extension = substr($best_extension, $overlap_clip);
+                            print {$filehandle{$seed_id2}} $overlap_clip." M\n";
+                            print {$filehandle{$seed_id2}} $best_extension." BEST_EXT_CHOPPED\n";
+                            my $diff_tmp = $best_extension_tmp_length - length($best_extension);
+                            $clipped_ext = "yes";
+                            $cp = $clipped_ext_pos{$diff_tmp};
+                            foreach my $subject_rank (sort {$a <=> $b} keys %subject_list)
+                            {
+                                my $seq_rank1c = substr $subject_list{$subject_rank}, 0, $cp;
+                                $seq_rank1c =~ tr/-//d;
+                                $track_length_ext{$subject_rank} = length($seq_rank1c);
+                            }
                         }
                         if ($clipped_ext eq "yes")
                         {
@@ -18170,8 +18611,10 @@ INPUT_MAFFT3_NP: while ((keys %subject_list > 2 || $only_2_reads eq "yes") && ((
 SWITCH_CLIP_NP:                     
 #-------------------------------------------------------------------------------------------------------
                     undef %nucs;
+					undef %nucs2;
                     undef %nucs_rej;
                     $total_nuc_count = '0';
+					$total_nuc_count2 = '0';
                     $total_nuc_count_rej = '0';
                     $nuc1 = "";
                     my %track_mismatch_ext0;
@@ -18182,6 +18625,12 @@ SWITCH_CLIP_NP:
 					$nucs{'t'} = '0';
 					$nucs{'g'} = '0';
 					$nucs{"-"} = '0';
+					$nucs2{'a'} = '0';
+					$nucs2{'c'} = '0';
+					$nucs2{'t'} = '0';
+					$nucs2{'g'} = '0';
+					$nucs2{"-"} = '0';
+					my $nuc2_check = '0';
 					my $nuc_top10 = "";
 					my %nucs_by_rank;
 					undef %nucs_by_rank;
@@ -18217,6 +18666,7 @@ SWITCH_CLIP_NP:
 							delete $subject_list{$subject_rank};
 							next;
 						}
+						$nuc2_check++;
 #Check HiFi assemblies--------------------------------------------------------------------					
 						if ($assemble_both_splits eq "yes3" && $subject_rank eq "2") 
 						{
@@ -18287,6 +18737,11 @@ SWITCH_CLIP_NP:
                         else
                         {
                             $nucs{$nuc} += 1;
+							if ($subject_rank <= 10 || $nuc2_check < 8 || $assembly_length_max eq "WG")
+							{
+								$nucs2{$nuc} += 1;
+								$total_nuc_count2++;
+							}
                             $total_nuc_count++;
 							if ($nuc_top10 eq "")
 							{
@@ -18794,9 +19249,14 @@ SWITCH_CLIP_NP:
 						$vv2 = '0.88';
 						$vv3 = '0.14';
 					}
-					if ($nucs{"-"} < 0.33*$total_nuc_count)
+					if ($nucs{"-"} < 0.25*$total_nuc_count)
 					{
-						$gap_extra = $nucs{"-"}/2;
+						$gap_extra = $nucs2{"-"}/2;
+					}
+					if ($SNR_read_ahead ne "")
+					{
+						$vv = '0.75';
+						$vv2 = '0.79';
 					}
 ADD_QUALITY_NP:                  
                     if (($nucs{"a"} > $total_nuc_count*$vv || ($nucs{"a"} > $total_nuc_count*0.49 && $PB_reads eq "" && $input_reads_DB_folder_PB eq "" && $only_2_reads eq "yes" && ($nuc1 eq 'a' || $nuc1 eq "-"))
@@ -18807,9 +19267,9 @@ ADD_QUALITY_NP:
                         $best_extension .= "A";
 						$best_extension_part .= "A";
 						
-                        if ($total_nuc_count > 2)
+                        if ($total_nuc_count2 > 2)
                         {
-                            $quality_scores_tmp{length($best_extension)} = ($nucs{"a"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                            $quality_scores_tmp{length($best_extension)} = ($nucs2{"a"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                         }
                         #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                         $nuc_match = "A";
@@ -18824,7 +19284,7 @@ ADD_QUALITY_NP:
 						$best_extension_part .= "C";
                         if ($total_nuc_count > 2)
                         {
-                            $quality_scores_tmp{length($best_extension)} = ($nucs{"c"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                            $quality_scores_tmp{length($best_extension)} = ($nucs2{"c"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                         }
                         #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                         $nuc_match = "C";
@@ -18839,7 +19299,7 @@ ADD_QUALITY_NP:
 						$best_extension_part .= "T";
                         if ($total_nuc_count > 2)
                         {
-                            $quality_scores_tmp{length($best_extension)} = ($nucs{"t"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                            $quality_scores_tmp{length($best_extension)} = ($nucs2{"t"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                         }
                         #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                         $nuc_match = "T";
@@ -18854,7 +19314,7 @@ ADD_QUALITY_NP:
 						$best_extension_part .= "G";
                         if ($total_nuc_count > 2)
                         {
-                            $quality_scores_tmp{length($best_extension)} = ($nucs{"g"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                            $quality_scores_tmp{length($best_extension)} = ($nucs2{"g"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                         }
                         #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                         $nuc_match = "G";
@@ -18868,7 +19328,7 @@ ADD_QUALITY_NP:
                     {
                         if ($nucs{"-"}/$total_nuc_count < 0.8)
 						{
-							$quality_scores_gap_tmp{length($best_extension)} = $nucs{"-"}/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+							$quality_scores_gap_tmp{length($best_extension)} = $nucs2{"-"}/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
 						}
 						
                         $nuc_match = "";
@@ -19149,7 +19609,7 @@ ADD_QUALITY_NP:
                             }
                             else
                             {
-                                $quality_scores_tmp{length($best_extension)} = $q_score." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                $quality_scores_tmp{length($best_extension)} = $q_score." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             }
                             
                             print {$filehandle{$seed_id2}} $total_nuc_count." TOTAL ".length($best_extension)." POS ".$nuc_match." N_CORRECTION\n";
@@ -19727,7 +20187,7 @@ POST_SNP_PATTERNS_TMP_NP: foreach my $pos_tmp (sort {$a <=> $b} keys %SNP_patter
 										$hap_position = "yes";
 										$best_extension .= "N";
 										$best_extension_part .= "N";
-										$quality_scores_tmp{length($best_extension)} = '0'." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+										$quality_scores_tmp{length($best_extension)} = '0'." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
 										$nuc_match = "N";
 										goto SKIP_INPUT_BLAST3_NP;
 									}
@@ -20497,10 +20957,14 @@ HIGHEST_RANK_NP:
 													delete $pos_pattern_list_tmp{$posie_tmp5};
 												}
 											}
-											
 											my $final_score_tmp = $total_score_tmp/($total_nuc_count*0.25);
+											my $min_final_score = '1';
+											if ($high_quality_ONT ne "")
+											{
+												$min_final_score = '0.9';
+											}
 											
-											if ($final_score_tmp > 1)
+											if ($final_score_tmp > $min_final_score)
 											{
 												$count_patterns++;
 												my $first_rank_tmp = "";
@@ -20531,7 +20995,7 @@ HIGHEST_RANK_NP:
 									{
 										my $first = "";
 										my $count_ranks = keys %{$read_patterns2{$score_tmp5}{$pattern_number}};
-										if (($count_ranks < 3 && $total_nuc_count > 10 ) || $count_ranks < 2)
+										if (($count_ranks < 3 && $total_nuc_count > 10) || $count_ranks < 2)
 										{}
 										else
 										{
@@ -20732,6 +21196,7 @@ HIGHEST_RANK_NP:
 										
 										if (($count_matches_tmp > 2 || $score_tmp > $highest_avg_score*0.95) 
 											&& (($score_tmp > $highest_avg_score*0.85)
+											|| ($score_tmp > $highest_avg_score*0.45 && $rank_count_tmp >= $highest_rank_count && $count_matches_tmp eq $rank_count_tmp && $rank_count_tmp > 3)
 											|| (($score_tmp > $highest_avg_score*0.45 || ($score_tmp > 10 && $rank_count_tmp > 4 && $highest_rank_count < 4)) && $score_tmp > 4 && $first_no_match >= $highest_first_no_match && $rank_count_tmp > $highest_rank_count && $count_matches_tmp > $highest_count_matches)
 											|| ($score_tmp > $highest_avg_score*0.7 && $post_pattern_match_extra eq "yes" && $rank_count_tmp > $highest_rank_count)
 											|| ($post_pattern_match eq "yes3" && $score_tmp > 1 && $count_matches_tmp > $highest_count_matches && $first_no_match >= $highest_first_no_match && $score_tmp > $highest_avg_score*0.3))
@@ -20796,7 +21261,8 @@ RANK_PATTERNS_NP:
 								|| ($score_tmp2 > $high_score_tmp*0.85 && $rank_patterns[2] > $high_count_matches_tmp && $rank_patterns[1] >= $high_first_no_match_tmp)
 								|| ($post_pattern_match_extra eq "yes" && $score_tmp2 > $high_score_tmp*0.7 && $rank_patterns[0] >= $high_rank_count_tmp && $rank_patterns[1] >= $high_first_no_match_tmp && $rank_patterns[2] >= $high_count_matches_tmp && ($rank_patterns[0] > $high_rank_count_tmp || $rank_patterns[1] > $high_first_no_match_tmp))
                                 || ($post_pattern_match eq "yes3" && $score_tmp2 > $high_score_tmp*0.4 && $rank_patterns[1] > $high_first_no_match_tmp && $rank_patterns[2] > $high_count_matches_tmp)
-                                || ($post_pattern_match ne "yes3" && $score_tmp2 > $high_score_tmp*0.8 && $rank_patterns[0] > $high_rank_count_tmp))
+                                || ($post_pattern_match ne "yes3" && $score_tmp2 > $high_score_tmp*0.8 && $rank_patterns[0] > $high_rank_count_tmp)
+								|| ($post_pattern_match eq "yes3" && $score_tmp2 > 1 && $rank_patterns[1] > $high_first_no_match_tmp && $rank_patterns[1] >= 10))
 								{
 									$high_score_tmp = $score_tmp2;
 									$high_rank_count_tmp = $rank_patterns[0];
@@ -21013,11 +21479,11 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 																	{
 																		$count_no_matches_tmp++;
 																	}
-																	if ($first_no_match eq "" && ($no_match ne "" || $match_tmp < 3))
+																	if ($first_no_match eq "" && $no_match ne "")
 																	{
 																		$first_no_match = $rank_tmp13;
 																	}
-																	elsif ($first_no_match eq "")
+																	elsif ($first_no_match eq "" && $match_tmp >= 3)
 																	{
 																		$first_no_match2++;
 																	}
@@ -21070,8 +21536,9 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 															}
 														}
 														my $save_pat_check = "";
-														if ($count_pos_no_matches_tmp > 1 && $count_matches_tmp > 2 && $count_matches_tmp > 0.15*$count_total_tmp && ($count_no_matches_tmp/2)+$count_no_matches_tmp2 < 0.2*$count_matches_tmp
-															&& ($first_no_match > 10 || $count_matches_tmp > 5) && $add_no_match_reads eq "" && $add_rejected_reads eq "")
+														if (($count_pos_no_matches_tmp > 1 || $high_quality_ONT eq "yes") && $count_matches_tmp > 2 && ($count_matches_tmp > 0.15*$count_total_tmp || $post_pattern_match eq "yes3")
+															&& ($count_no_matches_tmp/2)+$count_no_matches_tmp2 < 0.2*$count_matches_tmp && ($first_no_match >= 10 || $count_matches_tmp > 5
+															|| ($high_quality_ONT eq "yes" && ($count_no_matches_tmp+$count_no_matches_tmp2) eq '0')) && $add_no_match_reads eq "" && $add_rejected_reads eq "")
 														{
 															print {$filehandle{$seed_id2}} $count_matches_tmp." ADD_ALL_SNP_PATTERN\n";
 															$remove_by_rejected = "yes";
@@ -21116,18 +21583,19 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 																print {$filehandle{$seed_id2}} $first_no_match." CORRECT_FIRST_NO_MATCH\n";
 															}
 														}
-														
+														print {$filehandle{$seed_id2}} $first_no_match." FIRST_NO_MATCH\n";
 														print {$filehandle{$seed_id2}} $count_no_matches_tmp." COUNT_NO_MATCHES\n";
 														print {$filehandle{$seed_id2}} $count_no_matches_tmp2." COUNT_NO_MATCHES2\n";
 														print {$filehandle{$seed_id2}} $count_matches_tmp." COUNT_MATCHES\n";
-														if (($rank_one_check eq "yes" && $score_diff_check eq "" && $first_no_match < 10)
+														if ($current_score > 15 && $high_quality_ONT ne "" && $high_score_count == '0' && $count_tmp > 2)
+														{}
+														elsif (($rank_one_check eq "yes" && $score_diff_check eq "" && $first_no_match < 10)
 															|| ($high_score_count > 1 && $current_score < 7 && ($first_no_match < 10 || ($post_pattern_match ne "yes2" && $post_pattern_match ne "yes3") || $post_pattern_match_average eq ""))
 															|| ($first_no_match < 10 && $total_nuc_count < 9 && ($current_score < 5 || ($current_score < 20 && $high_quality_ONT eq "")))
 															|| ($post_pattern_match_average ne "yes" && $total_nuc_count < 15 && $current_score < 18)
 															|| ($NP_reads_support ne "" && ($first_no_match < 10 || $count_matches_tmp < 3))
 															|| ($post_pattern_match eq "" && ($count_tmp < 4 || $current_score < 4) && ($current_score < 20 || $count_tmp < 3) && ($high_quality_ONT eq "" || $current_score < 10 || $high_score_count > 0))
 															|| ($post_pattern_match ne "yes3" && $count_tmp < 4 && ($current_score < 8 || $count_tmp < 3))
-															|| ($first_no_match < 10 && $current_score < 3 && $count_tmp < 3)
 															|| ($first_no_match < 10 && $current_score < 10 && $count_matches_tmp*0.3 < $count_no_matches_tmp2 && $count_tmp < 6)
 															|| ($first_no_match < 7 && $current_score < 4)
 															|| ($count_tmp < 4 && $current_score < 7 && $first_no_match < 10)
@@ -21140,8 +21608,6 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 															|| ($first_no_match < 5 && ($current_score < 10 || ($post_pattern_match_extra eq "" && $current_score < 30)))
 															|| ($first_no_match < 10 && $count_matches_tmp < 3 && $current_score < 50 && $count_tmp < 5)
 															|| ($first_no_match < 8 && $current_score < 18 && $count_tmp < 5 && $selected_patterns_count > 1)
-															|| (($first_no_match < 7 || $first_no_match2 < 3) && $current_score < 5)
-															|| ($count_tmp < 5 && $current_score < 50 && $count_matches_tmp < 3 && $high_quality_ONT eq "")
 															|| ($post_pattern_match_extra ne "yes" && ($SNP_check eq "" || ($post_pattern_match_average ne "yes" && $count_tmp < 6)) && $current_score < 5)
 															|| ($post_pattern_match_extra ne "yes" && ($SNP_check eq "" || ($count_tmp < 5 && $total_nuc_count > 15)) && $current_score < 10 && $first_no_match < 10)
 															|| ($post_pattern_match_extra ne "yes" && $current_score < 20 && $count_tmp < 4 && ($cover_complete_assembly eq "yes" || $post_pattern_match_average ne "yes"))
@@ -21154,6 +21620,7 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 															|| ($high_score_count > 0 && ($count_tmp < 3 || ($post_pattern_match_extra ne "yes" && ($first_no_match < 10 || $count_tmp < 5))) && $current_score < 10 && $high_quality_ONT eq "")
 															|| ($high_score_count > 0 && ($first_no_match < 10 || $first_no_match2 < 3) && $current_score < 5)
 															|| ($high_score_count > 2 && $first_no_match < 10 && $current_score < 15)
+															|| ($count_matches_tmp < 4 && $current_score < 5 && ($count_no_matches_tmp2 > 0 || $count_no_matches_tmp > 0))
 															|| ($high_score_count > 2 && $count_pos_no_matches_tmp < 2 && ($post_pattern_match_extra eq "yes" || $current_score < 10) && $post_pattern_match ne "yes3")
 															|| ($first_no_match < 6 && $count_tmp < 4 && $post_pattern_match_extra ne "yes" && ($high_quality_ONT eq "" || $current_score < 10 || $high_score_count > 0))
 															|| ($high_score_count2 > 3 && $high_score_count > 2 && $current_score < 15 && $post_pattern_match ne "yes3")
@@ -21174,102 +21641,96 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 															$highest_count_no_matches = "";
 															next READ_PATTERN_FINAL_NP0;
 														}
-														else
-														{
-															$remove_reads = "yes";
-															$high_score_save = $current_score;
-															$add_all_patterns_save = $save_pat_check;
-															$highest_count_matches = $count_matches_tmp;
-															$highest_count_no_matches = $count_no_matches_tmp;
-															$first_no_match_save = $first_no_match;
+
+														$remove_reads = "yes";
+														$high_score_save = $current_score;
+														$add_all_patterns_save = $save_pat_check;
+														$highest_count_matches = $count_matches_tmp;
+														$highest_count_no_matches = $count_no_matches_tmp;
+														$first_no_match_save = $first_no_match;
 #Define selected nuc--------------------------------------------------------------------														
-															if ($add_no_match_reads ne "" && $first_no_match2 > 1)
+														if ($add_no_match_reads ne "" && $first_no_match2 > 1)
+														{
+															my $matches_count_tmp = '0';
+															my $no_matches_count_tmp = '0';
+															foreach my $rank_tmp8 (sort {$a <=> $b} keys %split_patterns_final)
 															{
-																my $matches_count_tmp = '0';
-																my $no_matches_count_tmp = '0';
-																foreach my $rank_tmp8 (sort {$a <=> $b} keys %split_patterns_final)
+																if ($rank_tmp8 > $add_no_match_reads)
 																{
-																	if ($rank_tmp8 > $add_no_match_reads)
+																	if (exists($reads_to_remove{$rank_tmp0}{$rank_tmp8}))				
 																	{
-																		if (exists($reads_to_remove{$rank_tmp0}{$rank_tmp8}))				
-																		{
-																			$matches_count_tmp++;
-																		}
-																		else
-																		{
-																			$no_matches_count_tmp++;
-																		}
+																		$matches_count_tmp++;
 																	}
-																}
-																my $extra_no_matches_count_tmp = '0';
-																foreach my $rank_tmp9 (sort {$a <=> $b} keys %{$reads_to_remove{$rank_tmp0}})
-																{
-																	if ($rank_tmp9 <= $add_no_match_reads)
+																	else
 																	{
-																		$extra_no_matches_count_tmp++;
-																	}
-																}
-																if ($extra_no_matches_count_tmp > 1 && $matches_count_tmp > 0.8*($matches_count_tmp+$no_matches_count_tmp))
-																{
-																	my $count_ranks_highest = '0';
-																	my $count_ranks_match_tmp = keys %{$split_patterns_final_score{$nuc_match}};
-																	my $count_ranks_highest2 = '0';
-																	
-																	foreach my $nuc_tmp13 (keys %split_patterns_final_score)
-																	{
-																		my $count_ranks_tmp = keys %{$split_patterns_final_score{$nuc_tmp13}};
-																		if ($nuc_tmp13 ne $nuc_match && $count_ranks_tmp >= $count_ranks_match_tmp)	
-																		{
-																			$count_ranks_highest2++;
-																		}
-																		if ($nuc_tmp13 ne $nuc_match && $count_ranks_tmp > $count_ranks_highest)	
-																		{
-																			$selected_nuc = $nuc_tmp13;
-																			$count_ranks_highest = $count_ranks_tmp;
-																			$remove_by_rejected = "yes";
-																		}
-																	}
-																	if ($count_ranks_highest2 > 1)
-																	{
-																		$selected_nuc = "";
-																		$remove_by_rejected = "";
+																		$no_matches_count_tmp++;
 																	}
 																}
 															}
-#------------------------------------------------------------------		
-															
-															if ($count_tmp > 3 || $current_score > 20)
-															{	
-																foreach my $pos_snp_tmp (sort {$a <=> $b} keys %{$pos_pattern_list{$current_score}{$current_rank}})
+															my $extra_no_matches_count_tmp = '0';
+															foreach my $rank_tmp9 (sort {$a <=> $b} keys %{$reads_to_remove{$rank_tmp0}})
+															{
+																if ($rank_tmp9 <= $add_no_match_reads)
 																{
-																	my $no_match_tmp = '0';
-																	my $match_tmp = '0';
-																	my $match_all_tmp = '0';
-																	my $out_of_range_tmp = '0';
-																	foreach my $rank_tmp5 (sort {$a <=> $b} keys %{$reads_to_remove{$current_rank}})
+																	$extra_no_matches_count_tmp++;
+																}
+															}
+															if ($extra_no_matches_count_tmp > 1 && $matches_count_tmp > 0.8*($matches_count_tmp+$no_matches_count_tmp))
+															{
+																my $count_ranks_highest = '0';
+																my $count_ranks_match_tmp = keys %{$split_patterns_final_score{$nuc_match}};
+																my $count_ranks_highest2 = '0';
+																
+																foreach my $nuc_tmp13 (keys %split_patterns_final_score)
+																{
+																	my $count_ranks_tmp = keys %{$split_patterns_final_score{$nuc_tmp13}};
+																	if ($nuc_tmp13 ne $nuc_match && $count_ranks_tmp >= $count_ranks_match_tmp)	
 																	{
-																		my $id_tmpi = $rank_to_id{$rank_tmp5};
-																		if (exists($alignment_length_save{$id_tmpi}))
+																		$count_ranks_highest2++;
+																	}
+																	if ($nuc_tmp13 ne $nuc_match && $count_ranks_tmp > $count_ranks_highest)	
+																	{
+																		$selected_nuc = $nuc_tmp13;
+																		$count_ranks_highest = $count_ranks_tmp;
+																		$remove_by_rejected = "yes";
+																	}
+																}
+																if ($count_ranks_highest2 > 1)
+																{
+																	$selected_nuc = "";
+																	$remove_by_rejected = "";
+																}
+															}
+														}
+#------------------------------------------------------------------		
+														
+														if ($count_tmp > 3 || $current_score > 20)
+														{	
+															foreach my $pos_snp_tmp (sort {$a <=> $b} keys %{$pos_pattern_list{$current_score}{$current_rank}})
+															{
+																my $no_match_tmp = '0';
+																my $match_tmp = '0';
+																my $match_all_tmp = '0';
+																my $out_of_range_tmp = '0';
+																foreach my $rank_tmp5 (sort {$a <=> $b} keys %{$reads_to_remove{$current_rank}})
+																{
+																	my $id_tmpi = $rank_to_id{$rank_tmp5};
+																	if (exists($alignment_length_save{$id_tmpi}))
+																	{
+																		my $overlap_tmp = $alignment_length_save{$id_tmpi};
+																		if ($position-$pos_snp_tmp < $overlap_tmp)
 																		{
-																			my $overlap_tmp = $alignment_length_save{$id_tmpi};
-																			if ($position-$pos_snp_tmp < $overlap_tmp)
+																			if (exists($store_mismatches_NP{$seed_id}{$id_tmpi}{$pos_snp_tmp}))
 																			{
-																				if (exists($store_mismatches_NP{$seed_id}{$id_tmpi}{$pos_snp_tmp}))
-																				{
-																					$match_tmp++;
-																				}
-																				elsif (exists($store_mismatches_all_NP{$seed_id}{$id_tmpi}{$pos_snp_tmp}))
-																				{
-																					$match_all_tmp++;
-																				}
-																				else
-																				{
-																					$no_match_tmp++;
-																				}
+																				$match_tmp++;
+																			}
+																			elsif (exists($store_mismatches_all_NP{$seed_id}{$id_tmpi}{$pos_snp_tmp}))
+																			{
+																				$match_all_tmp++;
 																			}
 																			else
 																			{
-																				$out_of_range_tmp++;
+																				$no_match_tmp++;
 																			}
 																		}
 																		else
@@ -21277,70 +21738,74 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 																			$out_of_range_tmp++;
 																		}
 																	}
-																	#print {$filehandle{$seed_id2}} $pos_snp_tmp."\t".$match_tmp."\t".$match_all_tmp."\t".$no_match_tmp."\t".$out_of_range_tmp." DUP_POS_TMP_TEST\n";	
-																	if (($match_tmp > 3 || $current_score > 20 && $match_tmp > 2) && $match_tmp*0.1 > $no_match_tmp
-																		&& ($match_tmp > $out_of_range_tmp+$match_all_tmp || $match_tmp > 4) && $match_tmp*0.2 > $match_all_tmp+$no_match_tmp)
+																	else
 																	{
-																		if (exists($split_positions_DUP{$seed_id}{$pos_snp_tmp}))
-																		{}
-																		else
-																		{
-																			my $read_end_tmpi = substr $read, $pos_snp_tmp-$overlap-1, $overlap;											
-																			my $selected_nuc_tmp = substr $read, $pos_snp_tmp-1, 1;
-																			$selected_nuc_tmp =~ tr/actgn/ACTGN/;
-																			print {$filehandle{$seed_id2}} $seed_id."\t".$pos_snp_tmp."\t".$read_end_tmpi."\t".$selected_nuc_tmp." DUP_POS_TMP_HALLE2\n";		
-																			$split_positions_DUP{$seed_id}{$pos_snp_tmp} = $read_end_tmpi;
-																			$split_positions_DUP2{$seed_id}{$pos_snp_tmp} = $selected_nuc_tmp;
-																			$count_dup_pos_halle2++;
-																		}
+																		$out_of_range_tmp++;
+																	}
+																}
+																#print {$filehandle{$seed_id2}} $pos_snp_tmp."\t".$match_tmp."\t".$match_all_tmp."\t".$no_match_tmp."\t".$out_of_range_tmp." DUP_POS_TMP_TEST\n";	
+																if (($match_tmp > 3 || $current_score > 20 && $match_tmp > 2) && $match_tmp*0.1 > $no_match_tmp
+																	&& ($match_tmp > $out_of_range_tmp+$match_all_tmp || $match_tmp > 4) && $match_tmp*0.2 > $match_all_tmp+$no_match_tmp)
+																{
+																	if (exists($split_positions_DUP{$seed_id}{$pos_snp_tmp}))
+																	{}
+																	else
+																	{
+																		my $read_end_tmpi = substr $read, $pos_snp_tmp-$overlap-1, $overlap;											
+																		my $selected_nuc_tmp = substr $read, $pos_snp_tmp-1, 1;
+																		$selected_nuc_tmp =~ tr/actgn/ACTGN/;
+																		print {$filehandle{$seed_id2}} $seed_id."\t".$pos_snp_tmp."\t".$read_end_tmpi."\t".$selected_nuc_tmp." DUP_POS_TMP_HALL\n";		
+																		$split_positions_DUP{$seed_id}{$pos_snp_tmp} = $read_end_tmpi;
+																		$split_positions_DUP2{$seed_id}{$pos_snp_tmp} = $selected_nuc_tmp;
+																		$count_dup_pos_halle2++;
 																	}
 																}
 															}
+														}
 #Exclude reads------------------------                                              
-															if ($count_matches_with_high_scores > $sequencing_depth_NP*10000000000000 && ($current_score > 20 || $first_no_match > 9))
-															{															
-																my $id_tmpi = "";
-																if (exists($rank_to_id{$rank_tmp0}))
+														if ($count_matches_with_high_scores > $sequencing_depth_NP*10000000000000 && ($current_score > 20 || $first_no_match > 9))
+														{															
+															my $id_tmpi = "";
+															if (exists($rank_to_id{$rank_tmp0}))
+															{
+																$id_tmpi = $rank_to_id{$rank_tmp0};
+															}
+															my $exclude_pos = $alignment_length_save{$id_tmpi};
+															if (length($read) < $alignment_length_save{$id_tmpi})
+															{
+																$exclude_pos = length($read);
+															}
+															if ($length_ext_all{$id_tmpi} > $exclude_pos && $alignment_length_save{$id_tmpi} > 5000)
+															{
+																$exclude_pos = $length_ext_all{$id_tmpi}*1.1;
+															}
+															if ($repetitive_detect1 eq "" && $repetitive_detect2 eq "")
+															{
+																$exclude_reads_NP{$id}{$id_tmpi} = $position+$exclude_pos;
+															}
+															foreach my $rank_tmp5 (sort {$a <=> $b} keys %{$reads_to_remove{$rank_tmp0}})
+															{
+																my $id_tmpi2 = "";
+																if (exists($rank_to_id{$rank_tmp5}))
 																{
-																	$id_tmpi = $rank_to_id{$rank_tmp0};
+																	$id_tmpi2 = $rank_to_id{$rank_tmp5};
 																}
-																my $exclude_pos = $alignment_length_save{$id_tmpi};
-																if (length($read) < $alignment_length_save{$id_tmpi})
+																my $exclude_pos = $alignment_length_save{$id_tmpi2};
+																if (length($read) < $alignment_length_save{$id_tmpi2})
 																{
 																	$exclude_pos = length($read);
 																}
-																if ($length_ext_all{$id_tmpi} > $exclude_pos && $alignment_length_save{$id_tmpi} > 5000)
+																if ($length_ext_all{$id_tmpi2} > $exclude_pos && $alignment_length_save{$id_tmpi2} > 5000)
 																{
-																	$exclude_pos = $length_ext_all{$id_tmpi}*1.1;
+																	$exclude_pos = $length_ext_all{$id_tmpi2}*1.1;
 																}
 																if ($repetitive_detect1 eq "" && $repetitive_detect2 eq "")
 																{
-																	$exclude_reads_NP{$id}{$id_tmpi} = $position+$exclude_pos;
-																}
-																foreach my $rank_tmp5 (sort {$a <=> $b} keys %{$reads_to_remove{$rank_tmp0}})
-																{
-																	my $id_tmpi2 = "";
-																	if (exists($rank_to_id{$rank_tmp5}))
-																	{
-																		$id_tmpi2 = $rank_to_id{$rank_tmp5};
-																	}
-																	my $exclude_pos = $alignment_length_save{$id_tmpi2};
-																	if (length($read) < $alignment_length_save{$id_tmpi2})
-																	{
-																		$exclude_pos = length($read);
-																	}
-																	if ($length_ext_all{$id_tmpi2} > $exclude_pos && $alignment_length_save{$id_tmpi2} > 5000)
-																	{
-																		$exclude_pos = $length_ext_all{$id_tmpi2}*1.1;
-																	}
-																	if ($repetitive_detect1 eq "" && $repetitive_detect2 eq "")
-																	{
-																		$exclude_reads_NP{$id}{$id_tmpi2} = $position+$exclude_pos;
-																	}
+																	$exclude_reads_NP{$id}{$id_tmpi2} = $position+$exclude_pos;
 																}
 															}
-															last READ_PATTERN_FINAL_NP0;
 														}
+														last READ_PATTERN_FINAL_NP0;
 													}
 												}
 											}
@@ -21642,7 +22107,7 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
 									my $gap_extra = '0';
 									if ($nucs{"-"} < 0.26*$total_nuc_count)
 									{
-										$gap_extra = $nucs{"-"}/2;
+										$gap_extra = $nucs2{"-"}/2;
 									}
                                     
                                     if ($nuc_highest_tmp eq "-" && $nucs{"-"} > 0)
@@ -21654,7 +22119,7 @@ READ_PATTERN_FINAL_NP:              	foreach my $rank_tmp (sort {$a <=> $b} keys
                                     }
                                     else
                                     {
-                                        $quality_scores_tmp{length($best_extension)} = ($nucs{$nuc_highest_tmp}+$gap_extra)/$count_total_ext2." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                        $quality_scores_tmp{length($best_extension)} = ($nucs2{$nuc_highest_tmp}+$gap_extra)/$count_total_ext2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                                     }           
                                     
                                     print {$filehandle{$seed_id2}} $nuc_match." N_CORRECTION_LONG\n";
@@ -23035,7 +23500,7 @@ SKIP_REJ_NP:
 								}
 							}
 							print {$filehandle{$seed_id2}} $score_score_match." ".$score_score_match1." SCORE_SCORE_MATCH\n";   
-							if ($score_score_match > 0 || $score_score_match1 > 2)
+							if ($score_score_match > 0 || $score_score_match1 > 2 || $ont_no_match_priority eq "yes")
 							{
 								my %nucs_rej_tmp;
 								undef %nucs_rej_tmp;
@@ -23059,7 +23524,7 @@ SKIP_REJ_NP:
 								foreach my $nuc_rej_tmp (keys %nucs_rej_tmp)
 								{
 									if ($nucs_rej_tmp{$nuc_rej_tmp} > 1 || ($nucs_rej_tmp{$nuc_rej_tmp} > 0 && $total_nuc_count_rej eq $nucs_rej_tmp{$nuc_rej_tmp}
-										&& $nuc_rej_tmp ne $longest_longest_match_nuc && $post_pattern_match eq "yes3" && ($trace_back_check eq "" || $high_quality_ONT ne "")))
+										&& $nuc_rej_tmp ne $longest_longest_match_nuc && ($post_pattern_match eq "yes3" || $ont_no_match_priority eq "yes") && ($trace_back_check eq "" || $high_quality_ONT ne "")))
 									{
 										my $count_removed = '0';
 										foreach my $rank_tmp8 (sort {$a <=> $b} keys %split_patterns_final)
@@ -25211,6 +25676,15 @@ SEP_HAP_END:
 						goto AFTER_NEXT_MAFFT;
 					}
 					
+					if ($assembly_length_max eq "WG" && $y < 5 && $first_back_assembly eq "" && length($read) < 60000 && $N > 9 && $N > length($best_extension)*0.06)
+					{
+						#print "READ_REJECTED4\n";
+						print {$filehandle{$seed_id2}} "READ_REJECTED_N5\n";
+						$first_back_assembly = "yes";
+						$terminate_early = "yes";
+						goto END1;
+					}
+					
 					my $best_extension_part_tmp = substr $best_extension, -500;
 					my $CG = $best_extension_part_tmp =~ tr/CGN/CGN/;
 					my $N_part = $best_extension_part_tmp =~ tr/N/N/;
@@ -25285,7 +25759,7 @@ SEP_HAP_END:
 					$gap_extra = '0';
 					if ($nucs{"-"} < 0.33*$total_nuc_count)
 					{
-						$gap_extra = $nucs{"-"}/2;
+						$gap_extra = $nucs2{"-"}/2;
 					}
 BASECALL2_NP:					
                     if ($found_haps_in_seed eq "" && ($clipped_ext ne "yes" || $best_extension eq "" || length($best_extension_part) < $length_extension_part*0.8 || ($SNR_read_ahead ne "" && $N < 4)
@@ -25293,60 +25767,60 @@ BASECALL2_NP:
 						|| $total_nuc_count < 6 || ($CG_rich eq "yes" && $N < length($best_extension)*0.2) || (length($best_extension) < $length_extension*0.8 && $N < length($best_extension)*0.3)))
                     {
 						$N_resolved++;
-						if ($nucs{"a"} > $total_nuc_count*$AF0 && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"a"} > $total_nuc_count*$AF2
+						if ($nucs{"a"} > $total_nuc_count*$AF0 && $post_pattern_match ne "yes3" && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"a"} > $total_nuc_count*$AF2
                          || ($nucs{"a"} > 2 && $nucs{"c"} < $total_nuc_count*0.2 && $nucs{"g"} < $total_nuc_count*0.2 && $nucs{"t"} < $total_nuc_count*0.2)))
                         {
                             $best_extension .= "A";
 							$best_extension_part .= "A";
                             if ($total_nuc_count > 2)
                             {
-                                $quality_scores_tmp{length($best_extension)} = ($nucs{"a"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                $quality_scores_tmp{length($best_extension)} = ($nucs2{"a"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             }
                             #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                             $nuc_match = "A";
                         }
-                        elsif ($nucs{"c"} > $total_nuc_count*$AF0 && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"c"} > $total_nuc_count*$AF2 ||
+                        elsif ($nucs{"c"} > $total_nuc_count*$AF0 && $post_pattern_match ne "yes3" && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"c"} > $total_nuc_count*$AF2 ||
                               ($nucs{"c"} > 2 && $nucs{"a"} < $total_nuc_count*0.2 && $nucs{"g"} < $total_nuc_count*0.2 && $nucs{"t"} < $total_nuc_count*0.2)))
                         {
                             $best_extension .= "C";
 							$best_extension_part .= "C";
                             if ($total_nuc_count > 2)
                             {
-                                $quality_scores_tmp{length($best_extension)} = ($nucs{"c"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                $quality_scores_tmp{length($best_extension)} = ($nucs2{"c"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             }
                             #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                             $nuc_match = "C";
                         }
-                        elsif ($nucs{"t"} > $total_nuc_count*$AF0 && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"t"} > $total_nuc_count*$AF2  ||
+                        elsif ($nucs{"t"} > $total_nuc_count*$AF0 && $post_pattern_match ne "yes3" && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"t"} > $total_nuc_count*$AF2  ||
                             ($nucs{"t"} > 2 && $nucs{"c"} < $total_nuc_count*0.2 && $nucs{"g"} < $total_nuc_count*0.2 && $nucs{"a"} < $total_nuc_count*0.2)))
                         {
                             $best_extension .= "T";
 							$best_extension_part .= "T";
                             if ($total_nuc_count > 2)
                             {
-                                $quality_scores_tmp{length($best_extension)} = ($nucs{"t"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                $quality_scores_tmp{length($best_extension)} = ($nucs2{"t"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             }
                             #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                             $nuc_match = "T";
                         }
-                        elsif ($nucs{"g"} > $total_nuc_count*$AF0 && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"g"} > $total_nuc_count*$AF2 ||
+                        elsif ($nucs{"g"} > $total_nuc_count*$AF0 && $post_pattern_match ne "yes3" && ($nucs{"-"} > $total_nuc_count*0.35 || $nucs{"g"} > $total_nuc_count*$AF2 ||
                               ($nucs{"g"} > 2 && $nucs{"c"} < $total_nuc_count*0.2 && $nucs{"a"} < $total_nuc_count*0.2 && $nucs{"t"} < $total_nuc_count*0.2)))
                         {
                             $best_extension .= "G";
 							$best_extension_part .= "G";
                             if ($total_nuc_count > 2)
                             {
-                                $quality_scores_tmp{length($best_extension)} = ($nucs{"g"}+$gap_extra)/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                                $quality_scores_tmp{length($best_extension)} = ($nucs2{"g"}+$gap_extra)/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             }
                             #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                             $nuc_match = "G";
                         }
-						elsif ($nucs{"-"} > $total_nuc_count*($AF2+$long_homo) || ($nucs{"-"} > $total_nuc_count*0.6 && $nucs{"c"} < $total_nuc_count*0.2 && $nucs{"g"} < $total_nuc_count*0.2 &&
-                                $nucs{"t"} < $total_nuc_count*0.2 && $nucs{"a"} < $total_nuc_count*0.2))
+						elsif (($nucs{"-"} > $total_nuc_count*($AF2+$long_homo) || ($nucs{"-"} > $total_nuc_count*0.6 && $nucs{"c"} < $total_nuc_count*0.2 && $nucs{"g"} < $total_nuc_count*0.2 &&
+                                $nucs{"t"} < $total_nuc_count*0.2 && $nucs{"a"} < $total_nuc_count*0.2)) && $post_pattern_match ne "yes3")
                         {
 							if ($nucs{"-"}/$total_nuc_count < 0.8)
 							{
-								$quality_scores_gap_tmp{length($best_extension)} = $nucs{"-"}/$total_nuc_count." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+								$quality_scores_gap_tmp{length($best_extension)} = $nucs2{"-"}/$total_nuc_count2." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
 							}
                             $nuc_match = "";
                         }
@@ -25355,7 +25829,7 @@ BASECALL2_NP:
                             $N++;
                             $best_extension .= "N";
 							$best_extension_part .= "N";
-                            $quality_scores_tmp{length($best_extension)} = '0'." ".$nucs{"a"}." ".$nucs{"c"}." ".$nucs{"t"}." ".$nucs{"g"}." ".$nucs{"-"};
+                            $quality_scores_tmp{length($best_extension)} = '0'." ".$nucs2{"a"}." ".$nucs2{"c"}." ".$nucs2{"t"}." ".$nucs2{"g"}." ".$nucs2{"-"};
                             #print {$filehandle{$seed_id2}} length($best_extension)." POS_QUAL ".$quality_scores_tmp{length($best_extension)}." QUAL ".$nucs{"a"}." A ".$nucs{"c"}." C ".$nucs{"t"}." T ".$nucs{"g"}." G ".$nucs{"-"}." GAP\n";
                             $nuc_match = "N";	
                         }
@@ -25585,6 +26059,14 @@ TRACE_BACK_POS_NEW_NP:		foreach my $pos_tmpi (sort {$b <=> $a} keys %{$trace_bac
 				
 				if (length($best_extension) < $length_extension-$extension_part_length && $unresolvable_NP eq "" && $loop_check eq "yes")
 				{
+					if ($assembly_length_max eq "WG" && $y eq "1" && length($best_extension) eq '0')
+					{
+						#print "READ_REJECTED4\n";
+						#print {$filehandle{$seed_id2}} "READ_REJECTED4\n";
+						$first_back_assembly = "yes";
+						$terminate_early = "yes";
+						goto END1;
+					}
 					if ($mafft_count < 3)
 					{
 						foreach my $rank_tmp3 (keys %track_length_ext)
@@ -25777,7 +26259,7 @@ AFTER_NEXT_MAFFT:
                     print {$filehandle{$seed_id2}} "BACK TO PB\n";
                     goto AFTER_EXT2;
                 }
-				elsif ($full_reset_NP eq "")
+				elsif ($full_reset_NP eq "" && $best_extension ne "")
 				{
 					delete $exclude_reads_NP{$seed_id};
 					delete $save_alignment_data_NP{$seed_id};
@@ -26943,7 +27425,7 @@ LOWER_DD:
 						if (($A_score > $C_score*$dd && $A_score > $T_score*$dd && $A_score > $G_score*$dd &&
 						   ($A_score > $gap_score*$no_homopolymer_AF || ($A_score > $gap_score*$homopolymer_AF && ($before4 eq "AAAA" || $after3 eq "AAA"))))
 						   || ($A_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-						   || ($A_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "A"))
+						   || ($A_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "A" && $homo_nuc+$A_score > $total_tmp*0.8))
 						{
 							$read_polished .= "A";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." A POLISHED\n";
@@ -26951,7 +27433,7 @@ LOWER_DD:
 						elsif (($C_score > $A_score*$dd && $C_score > $T_score*$dd && $C_score > $G_score*$dd && 
 						      ($C_score > $gap_score*$no_homopolymer_AF || ($C_score > $gap_score*$homopolymer_AF && ($before4 eq "CCCC" || $after3 eq "CCC"))))
 							  || ($C_score > $total_tmp*0.35 && (($before4 eq "AAAA" && $A_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-							  || ($C_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "C"))
+							  || ($C_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "C" && $homo_nuc+$C_score > $total_tmp*0.8))
 						{
 							$read_polished .= "C";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." C POLISHED\n";
@@ -26959,7 +27441,7 @@ LOWER_DD:
 						elsif (($T_score > $C_score*$dd && $T_score > $A_score*$dd && $T_score > $G_score*$dd &&
 						      ($T_score > $gap_score*$no_homopolymer_AF || ($T_score > $gap_score*$homopolymer_AF && ($before4 eq "TTTT" || $after3 eq "TTT"))))
 							   || ($T_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "AAAA" && $A_score > $total_tmp*0.35) || ($before4 eq "GGGG" && $G_score > $total_tmp*0.35)))
-							   || ($T_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "T"))
+							   || ($T_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "T" && $homo_nuc+$T_score > $total_tmp*0.8))
 						{
 							$read_polished .= "T";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." T POLISHED\n";
@@ -26967,7 +27449,7 @@ LOWER_DD:
 						elsif (($G_score > $C_score*$dd && $G_score > $T_score*$dd && $G_score > $A_score*$dd && 
 						      ($G_score > $gap_score*$no_homopolymer_AF || ($G_score > $gap_score*$homopolymer_AF && ($before4 eq "GGGG" || $after3 eq "GGG"))))
 							   || ($G_score > $total_tmp*0.35 && (($before4 eq "CCCC" && $C_score > $total_tmp*0.35) || ($before4 eq "TTTT" && $T_score > $total_tmp*0.35) || ($before4 eq "AAAA" && $A_score > $total_tmp*0.35)))
-							   || ($G_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "G"))
+							   || ($G_score > $total_tmp*0.3 && $homo_nuc ne "" && $homo_nuc ne "G" && $homo_nuc+$G_score > $total_tmp*0.8))
 						{
 							$read_polished .= "G";
 							#print {$filehandle{$seed_id2}} $pos_in_ass." G POLISHED\n";
@@ -27690,6 +28172,271 @@ my $first_delete = "no";
 my $skip_length = "1500";
 my $DB_direc_tmp_new = $DB_direc_tmp;
 
+# =====================================================================
+# PRE-PASS: full-length all-vs-all cleanup (added)
+#   (1) drop contigs fully contained inside a strictly longer contig
+#   (2) merge unambiguous terminal overlaps (forward AND reverse),
+#       skipping any contig end that overlaps more than one partner
+#   Works on full-length alignments, so it catches the large/inverted
+#   overlaps and big containments that the windowed passes below miss.
+#   Iterates (re-BLASTing the shrinking set) until nothing changes,
+#   then rebuilds the DB so the existing windowed passes see the result.
+# =====================================================================
+my $pp_enable          = 1;       # set 0 to disable the pre-pass entirely
+my $pp_tip             = 5000;    # how close to a contig tip an overlap must reach
+my $pp_min_overlap     = 5000;    # min overlap length to consider a merge
+my $pp_merge_max_mm    = 0.006;   # max mismatch-rate (%) for a merge (mirrors main bar)
+my $pp_contain_cov     = 0.90;    # min fraction of a contig spanned by ONE colinear HSP to call it contained
+my $pp_contain_min_pid = 99.5;    # min identity (%) for containment/coverage HSPs
+my $pp_merge_max_cov   = 0.90;    # block a dovetail merge when the contig is already this fraction
+                                  #   covered by its partner (redundant / structural variant, not a clean
+                                  #   extension) -- avoids duplicating sequence into the merged contig
+my $pp_min_pid_any     = 98.0;    # ignore HSPs below this identity (%)
+my $pp_max_rounds      = 20;
+
+# >>> PREPASS-LIB-START (kept self-contained so it can be unit-tested)
+sub pp_revcomp {
+    my $s = reverse($_[0]);
+    $s =~ tr/ACGTacgtNn/TGCAtgcaNn/;
+    return $s;
+}
+# total covered length of a list of [start,end] (1-based inclusive) intervals
+sub pp_covered_len {
+    my @iv = sort { $a->[0] <=> $b->[0] } @{ $_[0] };
+    return 0 unless @iv;
+    my ($cs, $ce) = @{ $iv[0] };
+    my $tot = 0;
+    for my $i (1 .. $#iv) {
+        my ($s, $e) = @{ $iv[$i] };
+        if ($s <= $ce + 1) { $ce = $e if $e > $ce; }
+        else { $tot += $ce - $cs + 1; ($cs, $ce) = ($s, $e); }
+    }
+    $tot += $ce - $cs + 1;
+    return $tot;
+}
+# Build the merged sequence for a dovetail case.
+#   case 1: FWD  A 3' -- B 5'      -> A + B(after overlap)        name A_m_B
+#   case 2: FWD  B 3' -- A 5'      -> B + A(after overlap)        name B_m_A
+#   case 3: REV  A 3' -- revcomp B -> A + revcomp(B before ovl)   name A_m_B
+#   case 4: REV  revcomp B -- A 5' -> revcomp(B after ovl) + A    name B_m_A
+# returns ($merged_seq, $order) where order 1 => A_m_B, 2 => B_m_A
+sub pp_build_merge {
+    my ($case, $seqA, $seqB, $a_lo, $a_hi, $b_lo, $b_hi) = @_;
+    if    ($case == 1) { return ($seqA . substr($seqB, $b_hi), 1); }
+    elsif ($case == 2) { return ($seqB . substr($seqA, $a_hi), 2); }
+    elsif ($case == 3) { return ($seqA . pp_revcomp(substr($seqB, 0, $b_lo - 1)), 1); }
+    else               { return (pp_revcomp(substr($seqB, $b_hi)) . $seqA, 2); }
+}
+# <<< PREPASS-LIB-END
+
+if ($pp_enable) {
+    #print "\n[PRE-PASS] starting full-length containment+overlap cleanup\n";
+    #print OUTPUT4 "\n[PRE-PASS] starting\n";
+    my $pp_total_changes = 0;
+
+    for (my $pp_round = 1; $pp_round <= $pp_max_rounds; $pp_round++) {
+        # ---- dump current contig set and build a DB from it ----
+        my $pp_fa  = $TMP_directory."prepass_round.fasta";
+        my $pp_db  = $TMP_directory."DB_PREPASS_RND";
+        my $pp_out = $TMP_directory."prepass_round.tsv";
+        open(my $PPFA, ">", $pp_fa) or die "PRE-PASS: can't write $pp_fa: $!\n";
+        foreach my $id (sort keys %contigs) {
+            print $PPFA ">".$id."\n";
+            my $s = $contigs{$id};
+            while (length($s) > 0) { print $PPFA substr($s, 0, 150, "")."\n"; }
+        }
+        close $PPFA;
+        system("makeblastdb -in ".$pp_fa." -dbtype nucl -out ".$pp_db." > /dev/null 2>&1");
+        my $pp_fmt = "6 qseqid sseqid pident length mismatch qstart qend sstart send qlen slen";
+        system("blastn -query ".$pp_fa." -db ".$pp_db." -outfmt \"".$pp_fmt."\" -perc_identity ".$pp_min_pid_any." -num_threads ".$maxProcs." -max_target_seqs 200 > ".$pp_out." 2> /dev/null");
+
+        # ---- parse HSPs ----
+        my %pp_cov;    # C => { D => [ [s,e], ... ] } intervals on C (HSPs C->D, hi-id) -> cumulative coverage
+        my %pp_maxhsp; # C => { D => {span,qs,qe,ss,se,...} } longest single colinear HSP on C -> true (colinear) containment
+        my %pp_best;   # "A\tB" (A lt B) => best (longest) HSP for that pair
+        open(my $PPR, "<", $pp_out) or die "PRE-PASS: can't read $pp_out: $!\n";
+        while (my $ln = <$PPR>) {
+            chomp $ln;
+            my @f = split /\t/, $ln;
+            next if @f < 11;
+            my ($q,$s,$pid,$len,$mm,$qs,$qe,$ss,$se,$qlen,$slen) = @f;
+            next if $q eq $s;
+            next unless exists $contigs{$q} && exists $contigs{$s};
+            next if $pid < $pp_min_pid_any;
+            if ($pid >= $pp_contain_min_pid) {
+                push @{ $pp_cov{$q}{$s} }, ($qs <= $qe ? [$qs,$qe] : [$qe,$qs]);
+                my $span = abs($qe - $qs) + 1;        # colinear span of this HSP on the query
+                if (!exists $pp_maxhsp{$q}{$s} || $span > $pp_maxhsp{$q}{$s}{span}) {
+                    $pp_maxhsp{$q}{$s} = { span=>$span, pid=>$pid, len=>$len, mm=>$mm,
+                                          qs=>$qs, qe=>$qe, ss=>$ss, se=>$se, qlen=>$qlen, slen=>$slen };
+                }
+            }
+            my ($a,$b) = ($q lt $s) ? ($q,$s) : ($s,$q);
+            my $key = $a."\t".$b;
+            if (!exists $pp_best{$key} || $len > $pp_best{$key}{len}) {
+                $pp_best{$key} = { q=>$q, s=>$s, pid=>$pid, len=>$len, mm=>$mm,
+                                   qs=>$qs, qe=>$qe, ss=>$ss, se=>$se, qlen=>$qlen, slen=>$slen };
+            }
+        }
+        close $PPR;
+
+        my $pp_changed = 0;
+
+        # ---- (1) containment removal ----
+        # Delete a contig ONLY when it is COMPLETELY contained in a longer one: a single
+        # colinear HSP covers it AND reaches within pp_tip of BOTH of its ends, so there is
+        # no real terminal overhang to lose. If one clean HSP covers most of it but it still
+        # extends past the alignment by more than pp_tip, that overhang is unique sequence --
+        # we must NOT throw it away. Such contigs are left in place; the dovetail branch below
+        # grafts the overhang onto the container (single HSP, any overlap length).
+        my %pp_remove;   # contained contig => container
+        foreach my $C (keys %pp_maxhsp) {
+            my $lenC = $lengths{$C};
+            my $best_cov = 0; my $best_D = ""; my $best_h;
+            foreach my $D (keys %{ $pp_maxhsp{$C} }) {
+                next unless exists $contigs{$D};
+                # only fold into a strictly longer container (equal length: keep the
+                # lexicographically smaller one so duplicates collapse to a single copy)
+                next unless ($lengths{$D} > $lenC) || ($lengths{$D} == $lenC && $D lt $C);
+                # require a SINGLE colinear alignment (true containment), NOT a patchwork
+                # of repeats/rearrangements that merely sums to high coverage
+                my $cov = $pp_maxhsp{$C}{$D}{span} / $lenC;
+                if ($cov > $best_cov) { $best_cov = $cov; $best_D = $D; $best_h = $pp_maxhsp{$C}{$D}; }
+            }
+            # targeted mode: don't drop a contig as "contained" in its own split sibling
+            $best_D = "" if ($best_D ne "" && $assembly_length_max ne "WG" && from_same_split($C, $best_D));
+            next if $best_D eq "";
+            next unless $best_cov >= $pp_contain_cov;
+            # only "complete" containment: the covering HSP must reach within pp_tip of both
+            # ends of C (no overhang longer than pp_tip on either side)
+            my ($a_lo,$a_hi) = $best_h->{qs} <= $best_h->{qe} ? ($best_h->{qs},$best_h->{qe})
+                                                             : ($best_h->{qe},$best_h->{qs});
+            next unless (($a_lo - 1) <= $pp_tip && ($lenC - $a_hi) <= $pp_tip);
+            $pp_remove{$C} = $best_D;
+        }
+        foreach my $C (sort keys %pp_remove) {
+            next unless exists $contigs{$C};
+            printf "[PRE-PASS] round %d DROP contained: %s (%d bp) inside %s\n",
+                   $pp_round, $C, $lengths{$C}, $pp_remove{$C};
+            print OUTPUT4 "[PRE-PASS] DROP ".$C." inside ".$pp_remove{$C}."\n";
+            delete $contigs{$C};
+            delete $lengths{$C};
+            $pp_changed++; $pp_total_changes++;
+        }
+
+        # ---- (2) unambiguous dovetail merges ----
+        my @pp_cand;
+        my %pp_tipuse;   # "contig\tL|R" => { partner => 1 }
+        foreach my $key (keys %pp_best) {
+            my $h = $pp_best{$key};
+            my $A = $h->{q}; my $B = $h->{s};
+            next unless exists $contigs{$A} && exists $contigs{$B};
+            next if exists $pp_remove{$A} || exists $pp_remove{$B};
+            my $len = $h->{len};
+            next if $len < $pp_min_overlap;
+            my $mm_rate = ($h->{mm} / $len) * 100;
+            next if $mm_rate >= $pp_merge_max_mm;
+            my $lenA = $lengths{$A}; my $lenB = $lengths{$B};
+            my ($a_lo,$a_hi) = $h->{qs} <= $h->{qe} ? ($h->{qs},$h->{qe}) : ($h->{qe},$h->{qs});
+            my ($b_lo,$b_hi) = $h->{ss} <= $h->{se} ? ($h->{ss},$h->{se}) : ($h->{se},$h->{ss});
+            my $strand = ($h->{se} >= $h->{ss}) ? "+" : "-";
+            my $A_left  = $a_lo <= $pp_tip;
+            my $A_right = $a_hi >= $lenA - $pp_tip;
+            my $B_left  = $b_lo <= $pp_tip;
+            my $B_right = $b_hi >= $lenB - $pp_tip;
+            next if ($A_left && $A_right) || ($B_left && $B_right);   # spanned => containment, not dovetail
+            # Block a merge only when a contig is highly covered by its partner in a
+            # FRAGMENTED way (many HSPs => repeats / structural variant, where grafting would
+            # duplicate sequence already present in the partner). A single clean colinear HSP
+            # that happens to span most of a contig is a legitimate terminal overlap -- graft
+            # the overhang regardless of how long the overlap is.
+            my $cumA = exists $pp_cov{$A}{$B} ? pp_covered_len($pp_cov{$A}{$B}) : 0;
+            my $cumB = exists $pp_cov{$B}{$A} ? pp_covered_len($pp_cov{$B}{$A}) : 0;
+            my $covA = $cumA / $lenA;
+            my $covB = $cumB / $lenB;
+            my $maxA = exists $pp_maxhsp{$A}{$B} ? $pp_maxhsp{$A}{$B}{span} : 0;
+            my $maxB = exists $pp_maxhsp{$B}{$A} ? $pp_maxhsp{$B}{$A}{span} : 0;
+            my $singleA = ($cumA > 0 && $maxA >= 0.95 * $cumA);   # coverage is ~one colinear HSP
+            my $singleB = ($cumB > 0 && $maxB >= 0.95 * $cumB);
+            next if ($covA >= $pp_merge_max_cov && !$singleA)
+                 || ($covB >= $pp_merge_max_cov && !$singleB);
+            my ($case, $endA, $endB);
+            if    ($strand eq "+" && $A_right && $B_left  && !$A_left  && !$B_right) { $case=1; $endA="R"; $endB="L"; }
+            elsif ($strand eq "+" && $A_left  && $B_right && !$A_right && !$B_left ) { $case=2; $endA="L"; $endB="R"; }
+            elsif ($strand eq "-" && $A_right && $B_right && !$A_left  && !$B_left ) { $case=3; $endA="R"; $endB="R"; }
+            elsif ($strand eq "-" && $A_left  && $B_left  && !$A_right && !$B_right) { $case=4; $endA="L"; $endB="L"; }
+            else { next; }
+            push @pp_cand, { A=>$A, B=>$B, case=>$case, endA=>$endA, endB=>$endB,
+                             a_lo=>$a_lo, a_hi=>$a_hi, b_lo=>$b_lo, b_hi=>$b_hi, len=>$len };
+            $pp_tipuse{$A."\t".$endA}{$B} = 1;
+            $pp_tipuse{$B."\t".$endB}{$A} = 1;
+        }
+        my %pp_used;
+        foreach my $c (sort { $b->{len} <=> $a->{len} } @pp_cand) {
+            my ($A,$B,$endA,$endB) = ($c->{A}, $c->{B}, $c->{endA}, $c->{endB});
+            next if exists $pp_used{$A} || exists $pp_used{$B};
+            next unless exists $contigs{$A} && exists $contigs{$B};
+            # ambiguity guard: each involved tip must overlap exactly ONE partner
+            next if scalar(keys %{ $pp_tipuse{$A."\t".$endA} }) != 1;
+            next if scalar(keys %{ $pp_tipuse{$B."\t".$endB} }) != 1;
+            # targeted mode: never dovetail-merge two contigs from the same haplotype split
+            next if $assembly_length_max ne "WG" && from_same_split($A, $B);
+
+            my $seqA = $contigs{$A}; my $seqB = $contigs{$B};
+            my ($merged, $order) = pp_build_merge($c->{case}, $seqA, $seqB,
+                                                  $c->{a_lo}, $c->{a_hi}, $c->{b_lo}, $c->{b_hi});
+            my $id_new = ($order == 1) ? $A."_m_".$B : $B."_m_".$A;
+
+            # length sanity check (same spirit as the windowed merge below)
+            my $overlap  = $c->{a_hi} - $c->{a_lo} + 1;
+            my $expected = length($seqA) + length($seqB) - $overlap;
+            my $tol = int(0.10 * $expected); $tol = 500 if $tol < 500;
+            if (abs(length($merged) - $expected) > $tol) {
+                print OUTPUT4 "[PRE-PASS] skip merge (len check) ".$A." + ".$B.
+                              " expected ~".$expected." got ".length($merged)."\n";
+                next;
+            }
+            printf "[PRE-PASS] round %d MERGE %s [%s] + %s [%s] (%s, overlap %d) -> %s (%d bp)\n",
+                   $pp_round, $A, $endA, $B, $endB, ($c->{case} <= 2 ? "fwd" : "rev"),
+                   $overlap, $id_new, length($merged);
+            print OUTPUT4 "[PRE-PASS] MERGE ".$A." + ".$B." -> ".$id_new." len ".length($merged)."\n";
+
+            $contigs{$id_new} = $merged;
+            $lengths{$id_new} = length($merged);
+            $merged{$A} = $id_new;
+            $merged{$B} = $id_new;
+            $contigs_old{$A} = $seqA;
+            $contigs_old{$B} = $seqB;
+            delete $contigs{$A}; delete $lengths{$A};
+            delete $contigs{$B}; delete $lengths{$B};
+            $pp_used{$A} = 1; $pp_used{$B} = 1; $pp_used{$id_new} = 1;
+            $pp_changed++; $pp_total_changes++;
+        }
+
+        last if !$pp_changed;
+    }
+
+    #print "[PRE-PASS] done: ".$pp_total_changes." change(s); ".scalar(keys %contigs)." contigs remain\n";
+    #print OUTPUT4 "[PRE-PASS] done: ".$pp_total_changes." change(s)\n";
+
+    # rebuild the main BLAST DB from the cleaned set so the windowed passes use it
+    if ($pp_total_changes > 0) {
+        my $pp_clean_fa = $TMP_directory."prepass_clean.fasta";
+        open(my $PPC, ">", $pp_clean_fa) or die "PRE-PASS: can't write $pp_clean_fa: $!\n";
+        foreach my $id (sort keys %contigs) {
+            print $PPC ">".$id."\n";
+            my $s = $contigs{$id};
+            while (length($s) > 0) { print $PPC substr($s, 0, 150, "")."\n"; }
+        }
+        close $PPC;
+        my $pp_db_dir = $TMP_directory."DB_PREPASS_CLEAN";
+        mkdir $pp_db_dir;
+        my $pp_db2 = $pp_db_dir."/DB_PREPASS_CLEAN";
+        system("makeblastdb -in ".$pp_clean_fa." -dbtype nucl -out ".$pp_db2." > /dev/null 2>&1");
+        $DB_direc_tmp_new = $pp_db2;
+    }
+}
+
 START_MERGE:
 my %files;
 undef %files;
@@ -27711,7 +28458,7 @@ foreach my $contig_id (sort keys %contigs)
     my $query_accuracy0 = "98";
     
     my $first_start_seq = "";
-    if ($first_start eq "yes" || $first_delete eq "yes")
+    if ($first_start eq "yes")
     {
          $first_start_seq = substr $contig_seq, -$length_seq-$skip_length, $length_seq;
     }
@@ -28021,7 +28768,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
                         {
                             $file_complete2 = "yes";
                             $files_done2{$group_id}{$subject_id}{$id_tmp}{$extra} = undef;
-               #print OUTPUT4 "\n\n".$contig_id." ID\n";         
+               print OUTPUT4 "\n\n".$subject_id." ID\n";         
                             close BLAST_RESULTS_DB2;
                             goto DB_RESULTS2;
                         }
@@ -28048,11 +28795,11 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
                             {
                                 my $mismatch_rate = ($mismatches/$alignment_length2)*100;
 								my $N_adjust3 = $N_adjust_subject+$N_adjust_query;
-                                if ($mismatch_rate-$N_adjust3 < 0.006)
+                                if ($mismatch_rate-$N_adjust3 < 0.006 && $alignment_length2 >= 300)
                                 {
-                                    if ($query_start_tmp2 < 20 && $read_pos_end_tmp-($skip_length+$length_seq) < 100 && $query_end_tmp2 > length($query_end_tmp2)-100 && $first_start eq "no")
+                                    if ($query_start_tmp2 < 20 && $read_pos_end_tmp-($skip_length+$length_seq) < 100 && $query_end_tmp2 > $length_query_seq_tmp-100 && $first_start eq "no")
                                     {
-                                        #print OUTPUT4 $id_tmp." ".$lengths{$id_tmp}." DELETE1\n";
+                                        print OUTPUT4 $id_tmp." ".$lengths{$id_tmp}." DELETE1\n";
                                         delete $lengths{$id_tmp};
                                         delete $contigs{$id_tmp};
                                         undef %aligned;
@@ -28060,7 +28807,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
                                     }
                                     elsif ($subject_start_tmp2 < 20 && $subject_end_tmp2 > $lengths{$subject_id}-100)
                                     {
-                                        #print OUTPUT4 $subject_id." ".$lengths{$subject_id}." DELETE2\n";
+                                        print OUTPUT4 $subject_id." ".$lengths{$subject_id}." DELETE2\n";
                                         delete $lengths{$subject_id};
                                         delete $contigs{$subject_id};
                                         undef %aligned;
@@ -28068,7 +28815,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
                                     }
                                     elsif ($query_start_tmp2 < 20 && $query_end_tmp2 > $lengths{$id_tmp}-100)
                                     {
-                                        #print OUTPUT4 $id_tmp." ".$lengths{$id_tmp}." DELETE3\n";
+                                        print OUTPUT4 $id_tmp." ".$lengths{$id_tmp}." DELETE3\n";
                                         delete $lengths{$id_tmp};
                                         delete $contigs{$id_tmp};
                                         undef %aligned;
@@ -28079,7 +28826,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
                                         my $id_new = $id_tmp."_m_".$subject_id;
                 
                                         $merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2} = $subject_end_tmp2."+".$length_tmp."+".$query_end_tmp2."+".$reverse_tmp."+".$read_pos_start_tmp."+".$read_pos_end_tmp."+".$id_new."+".$first_start."+".$N_adjust_subject."+".$N_adjust_query."+";
-                                        #print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE1\n";
+                                        print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE1\n";
                                     }
                                     elsif ($query_start_tmp2 < 100 && $subject_end_tmp2 > $length_query_seq_tmp-100 && $reverse_tmp eq "no" && $first_start eq "no" && $first_delete eq "yes")
                                     {
@@ -28087,7 +28834,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
 
                                         my $read_pos_end_tmp5 = $read_pos_start_tmp-$skip_length;
                                         $merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2} = $subject_end_tmp2."+".$length_tmp."+".$query_end_tmp2."+".$reverse_tmp."+".$read_pos_start_tmp."+".$read_pos_end_tmp."+".$id_new."+".$first_start."+".$N_adjust_subject."+".$N_adjust_query."+";
-                                        #print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE2\n";
+                                        print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE2\n";
                                     }
                                     elsif ($query_start_tmp2 < 100 && $subject_end_tmp2 > $length_subject_seq_tmp-100 && $reverse_tmp eq "yes" && $first_start eq "yes" && $first_delete eq "yes")
                                     {
@@ -28095,7 +28842,7 @@ BLAST_RESULTS2:     while (my $line_tmp2 = <BLAST_RESULTS_DB2>)
 
                                         my $read_pos_end_tmp5 = $read_pos_start_tmp-$skip_length;
                                         $merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2} = $subject_end_tmp2."+".$length_tmp."+".$query_end_tmp2."+".$reverse_tmp."+".$read_pos_start_tmp."+".$read_pos_end_tmp."+".$id_new."+".$first_start."+".$N_adjust_subject."+".$N_adjust_query."+";
-                                        #print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE3\n";
+                                        print OUTPUT4 $group_id." ".$merge_matches{$group_id}{$id_tmp}{$accuracy_tmp2}{$alignment_length2}." MERGE3\n";
                                     }
                                 }
                             }
@@ -28139,6 +28886,8 @@ MERGE_NEW:
 
                         foreach my $id_blast_tmp2 (keys %{$merge_matches{$group_id}})
                         {
+                            # targeted mode: never merge two contigs from the same haplotype split
+                            next if $assembly_length_max ne "WG" && from_same_split($subject_id, $id_blast_tmp2);
                             foreach my $acc_tmp (sort {$b <=> $a} keys %{$merge_matches{$group_id}{$id_blast_tmp2}})
                             {
                                 foreach my $alignment_length2_tmp (sort {$b <=> $a} keys %{$merge_matches{$group_id}{$id_blast_tmp2}{$acc_tmp}})
@@ -28146,7 +28895,7 @@ MERGE_NEW:
                                    if ($highest eq "")
                                    {
                                         $highest = $acc_tmp;
-                                        #print $id_blast_tmp2." ".$highest." ".$merge_matches{$group_id}{$id_blast_tmp2}{$acc_tmp}{$alignment_length2_tmp}." HIGHEST_ACC\n";
+                                        print OUTPUT4 $id_blast_tmp2." ".$highest." ".$merge_matches{$group_id}{$id_blast_tmp2}{$acc_tmp}{$alignment_length2_tmp}." HIGHEST_ACC\n";
                                         $merge_matches_new{$id_blast_tmp2} = $merge_matches{$group_id}{$id_blast_tmp2}{$acc_tmp}{$alignment_length2_tmp};
                                         next;
                                    }
@@ -28168,10 +28917,10 @@ MERGE_NEW:
                         my $count_matches2 = keys %merge_matches_new;
                         if ($count_matches2 > 1)
                         {
-                            #print $highest_length." HIGHEST_LENGTH\n";
+                            print OUTPUT4 $highest_length." HIGHEST_LENGTH\n";
                             foreach my $id_blast_tmp2 (keys %{$merge_matches{$group_id}})
                             {
-                                #print $id_blast_tmp2." ID_CHECK\n";
+                                print OUTPUT4 $id_blast_tmp2." ID_CHECK\n";
                                 foreach my $acc_tmp (sort {$b <=> $a} keys %{$merge_matches{$group_id}{$id_blast_tmp2}})
                                 {
                                     foreach my $alignment_length2_tmp (sort {$b <=> $a} keys %{$merge_matches{$group_id}{$id_blast_tmp2}{$acc_tmp}})
@@ -28179,7 +28928,7 @@ MERGE_NEW:
                                         if ($id_blast_tmp2 ne $highest_length_id && ($alignment_length2_tmp < $highest_length/5) && $highest_length > 250000)
                                         {
                                             delete $merge_matches_new{$id_blast_tmp2};
-                                             #print $id_blast_tmp2." DELETE_MERGE\n";
+                                             print OUTPUT4 $id_blast_tmp2." DELETE_MERGE\n";
                                         }
                                     }
                                 }
@@ -28278,7 +29027,22 @@ MERGE_NEW:
                                 {
                                     $merged_contig = $subject_seq.$query_seq;
                                 }
-                
+
+                                # Sanity-check: merged length must look like sum-of-parts minus the reported overlap.
+                                # If it's wildly off, the overlap classification was probably wrong; skip the merge.
+                                my $len_a = length($contigs_tmp);
+                                my $len_b = length($contigs_tmp2);
+                                my $overlap_len = $query_end_tmp2;
+                                my $expected_len = $len_a + $len_b - $overlap_len;
+                                my $merged_len = length($merged_contig);
+                                my $tol = int(0.10 * $expected_len);
+                                if ($tol < 500) { $tol = 500; }
+                                if ($overlap_len < 500 || abs($merged_len - $expected_len) > $tol)
+                                {
+                                    print OUTPUT4 "Skip merge (length check failed): ".$subject_id." + ".$id_blast_tmp2." | expected ~".$expected_len." got ".$merged_len." overlap ".$overlap_len."\n";
+                                    next NEXT_CONTIG2;
+                                }
+
                                 $contigs{$id_new} = $merged_contig;
                                 $lengths{$id_new} = length($merged_contig);
                                 $merged{$id_blast_tmp2} = $id_new;
@@ -28339,7 +29103,7 @@ foreach my $group_id_tmp(sort keys %files_done2)
 if ($group_count_done_tmp2 < $group_count_total_tmp2 && $count_merges < 100)
 {
 	$count_merges++;
-	sleep(0.5);
+	select(undef, undef, undef, 0.5);
 	goto NEXT_CONTIG20;
 }
 elsif ($group_count_done_tmp2 < $group_count_total_tmp2 && $count_merges >= 100)
@@ -28347,11 +29111,24 @@ elsif ($group_count_done_tmp2 < $group_count_total_tmp2 && $count_merges >= 100)
     #print $group_count_done_tmp2." ".$group_count_total_tmp2." GROU_COUNT\n";
 }
 
-if ($first_delete eq "no")
+if ($first_start eq "yes")
 {
-    $first_delete = "yes";
+    # Within the same first_delete value: switch from end-probe to start-probe pass.
+    # The BLAST DB does not need rebuilding (deletes do not add new contigs, and the
+    # downstream `unless(exists($contigs{...}))` gates filter hits to removed contigs).
+    $first_start = "no";
     undef %aligned;
-    
+    goto START_MERGE;
+}
+elsif ($first_delete eq "no")
+{
+    # Both probe directions of pass 1 (deletes only) are done. Switch to pass 2
+    # (deletes + merges), starting from end-probe again. Rebuild the DB from the
+    # current (possibly reduced) %contigs set so merge candidates BLAST cleanly.
+    $first_delete = "yes";
+    $first_start = "yes";
+    undef %aligned;
+
     my $output_file5b  = $output_path."Merged_contigs_tmp.fasta";
     open(OUTPUT_MERGED_TMP, ">" .$output_file5b) or die "\nCan't open file $output_file5b, $!\n";
     foreach my $id_tmp (keys %contigs)
@@ -28368,12 +29145,13 @@ if ($first_delete eq "no")
     my $DB_direc_tmp2 = $output_path."DB_MERGE2/DB_MERGE2";
     mkdir $DB_direc_tmp2;
     $DB_direc_tmp_new = $DB_direc_tmp2;
-    my $DB_output_tmp2 = $output_path."DB_tmp_file2.txt";    
+    my $DB_output_tmp2 = $output_path."DB_tmp_file2.txt";
     my $command_make_DB2 = "makeblastdb -in ".$output_file5b." -dbtype nucl -out ".$DB_direc_tmp2." > ".$DB_output_tmp2."";
     system($command_make_DB2);
-    sleep(2);                  
+    sleep(2);
     goto START_MERGE;
 }
+# else: pass 2 (yes, yes) and (no, yes) are both done — fall through to final write.
 
 my $output_file55  = $output_path."assembly_final_".$project.".fasta";
 open(OUTPUT_MERGED, ">" .$output_file55) or die "\nCan't open file $output_file55, $!\n";
@@ -28397,12 +29175,12 @@ close OUTPUT4;
 if ($TMP_directory ne "" && $TMP_directory ne $output_path)
 {
 	opendir(DIR_TMP, $TMP_directory) or die "Could not open $TMP_directory\n";
-				
+
 	for my $filename (readdir(DIR_TMP))
 	{
 		if ($filename ne "." && $filename ne "..")
 		{
-			unlink $filename;
+			unlink $TMP_directory.$filename;
 		}
 	}
 	closedir DIR_TMP;
@@ -28414,3 +29192,5 @@ if ($NP_reads ne "" || $PB_reads ne "" || $input_reads_DB_folder_NP ne "" || $in
 	$chnl->end;
     MCE::Child->waitall;
 }
+
+print "\nThank you for using NOVOLoci!\n\n";
