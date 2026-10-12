@@ -3,7 +3,7 @@ FROM ubuntu:24.04
 
 # 2. Metadata
 LABEL maintainer="ndierckx@github" \
-      version="0.9" \
+      version="1.0" \
       description="NOVOLoci: BLAST+ • kalign3 • Perl MCE & Parallel::ForkManager"
 
 # 3. Environment
@@ -36,4 +36,4 @@ WORKDIR /opt/novoloci
 ENV PATH=/opt/novoloci:$PATH
 
 # 8. Default entrypoint
-ENTRYPOINT ["perl", "NOVOLoci0.9.pl"]
+ENTRYPOINT ["perl", "NOVOLoci1.0.pl"]
