@@ -48,7 +48,7 @@ If your assembly was unsuccessful, you could already add the log file and the co
 
 <code>singularity pull docker://ndierckx/novoloci:latest</code>
 
-<code>singularity exec novoloci_latest.sif NOVOLoci0.9.pl -c config.txt</code>
+<code>singularity exec novoloci_latest.sif NOVOLoci1.0.pl -c config.txt</code>
 
 OR 
 
@@ -83,7 +83,7 @@ OR
   
   <code>cpan install Parallel::ForkManager</code>
   
-  <code>perl NOVOLoci0.9.pl -c config.txt</code>
+  <code>perl NOVOLoci1.0.pl -c config.txt</code>
 
 ## How to run
 
@@ -106,9 +106,9 @@ conda       : <code>novoloci -c config.txt</code>
 
 Docker      : <code>docker run --rm ndierckx/novoloci  -c config.txt</code>
 
-Singularity : <code>singularity exec novoloci_latest.sif NOVOLoci0.7.pl -c config.txt</code>
+Singularity : <code>singularity exec novoloci_latest.sif NOVOLoci1.0.pl -c config.txt</code>
 
-Local       : <code>perl NOVOLoci0.7.pl -c config.txt</code>
+Local       : <code>perl NOVOLoci1.0.pl -c config.txt</code>
 
 
 ## Demo
